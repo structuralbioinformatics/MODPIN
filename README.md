@@ -1,7 +1,7 @@
 # INSTALLATION
 ###### From main source:
 ```
-git clone https://github.com/structuralbioinformatics/Modpin.git
+git clone https://github.com/structuralbioinformatics/MODPIN.git
 
 cd Modpin
 
