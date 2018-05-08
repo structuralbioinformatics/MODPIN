@@ -3,7 +3,7 @@
 ```
 git clone https://github.com/structuralbioinformatics/Modpin.git
 
-cd modpin
+cd Modpin
 
 pip install . --user
 ```
