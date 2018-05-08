@@ -1,0 +1,9 @@
+[console_scripts]
+3did = modpin.src.functions.3did:main
+FilterHomologPairs = modpin.scripts.FilterHomologPairs:main
+Renumerate = modpin.scripts.Renumerate:main
+analysis = modpin.scripts.analysis:main
+configuration = modpin.config_setup:main
+modelist = modpin.scripts.modelist:main
+modppi = modpin.scripts.modppi:main
+

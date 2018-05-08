@@ -1,0 +1,6 @@
+include *.rst
+recursive-include modpin *
+recursive-include scripts *
+recursive-include utils *
+recursive-include example *
+recursive-include docs *

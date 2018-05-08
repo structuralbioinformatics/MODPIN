@@ -1,0 +1,13 @@
+[blast]
+executable     = psiblast
+dbformatexe    = makeblastdb
+path           = /usr/local/ncbi/blast/bin/
+variable_path
+
+[dssp]
+executable     = dsspcmbi
+path           = /soft/bio/structure/dssp
+
+[cd-hit]
+executable     = cd-hit
+path           = /soft/bio/sequence/cd-hit
