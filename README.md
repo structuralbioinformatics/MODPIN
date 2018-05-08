@@ -5,10 +5,11 @@ git clone https://github.com/structuralbioinformatics/MODPIN.git
 
 cd Modpin
 
-pip install . --user
-
-OR IF YOU PREFER TO INSTALL IT INSIDE THE FOLDER DOWNLOADED FROME GITHUB:
+IF YOU PREFER TO INSTALL IT INSIDE THE FOLDER DOWNLOADED FROME GITHUB:
 pip install -e . --user
+
+OR LET PIP INSTALL IT IN THE DEFAULT DIRECTORY 
+pip install . --user
 
 ```
 
