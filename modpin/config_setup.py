@@ -168,7 +168,7 @@ def main():
 
 		reduce_path = raw_input("6) Insert path to executable of reduce: ")
 		reduce_path = reduce_path.lstrip()
-		while os.path.isfile(reduce_path) == False:
+		while os.path.isfile(reduce_path) == false:
 			reduce_path = raw_input ("Insert the correct path to executable of reduce, or press enter to skip and add it later manually to the config.ini file: ")
 			reduce_path = reduce_path.lstrip()
 			if not reduce_path:
