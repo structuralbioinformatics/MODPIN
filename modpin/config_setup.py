@@ -23,27 +23,8 @@ def main():
 	config.set('Paths', 'modppi_path', modppi_path)
 	config.set('Paths', 'sbi_library_path', os.path.join(".", "src"))
 	config.set('Paths', 'functions_path', os.path.join(".", "src", "functions" ))
-        try:
-          if not os.path.isdir(os.path.join(modppi_path,"data")): os.makedirs(os.path.join(modppi_path,"data"))
-          if not os.path.isdir(os.path.join(modppi_path,"blast")):os.makedirs(os.path.join(modppi_path,"blast"))
-        except:
-          print "ERROR: You don't have permissions in this folder"
-          exit(0)
-	config.set('Paths', 'data_path', os.path.join(".", "data"))
-	config.set('Paths', 'blast_dir',  os.path.join(".", "blast"))
 	config.set('Paths', 'archdb_path',  os.path.join(modppi_path, "src"))
-	config.set('Paths', 'pdb_path',  os.path.join(".", "data", "pdbsource"))
-	config.set('Paths', '3did_path',  os.path.join(".", "data", "3did"))
-
-	config.set('Files', 'fasta_list_file', os.path.join(".", "data", "nr.fa"))
-	config.set('Files', 'nr90_list_file', os.path.join(".", "data", "merged_nr90.fa"))
-	config.set('Files', 'ppi_files', os.path.join(".", "data", "pdb"))
-	config.set('Files', 'ddi_files', os.path.join(".", "data", "3did"))
-	config.set('Files', 'pdb_list_file', os.path.join(".", "data", "pdb.list"))
-	config.set('Files', '3did_list_file', os.path.join(".", "data", "3did.list"))
-	config.set('Files', 'database_file', os.path.join(".", "database.fasta"))
-
-
+ 
 	config.set('Parameters','PPI_distance_threshold','8.0')
 	config.set('Parameters','PPI_distance_threshold_shell','15.0')
 	config.set('Parameters','PPI_threshold_type','cb')
@@ -63,7 +44,119 @@ def main():
 	if configuration== "n":
 		print ("Please edit the config.ini file in the scripts directory of your Modpin installation folder.")
 	else:	
-		
+                configuration_data = raw_input ("Press enter to configure your own storage of data \"n\" if you prefer to use the default configuration: ")
+
+                if configuration_data =="n" or configuration_data =="N":
+       			try:
+          			if not os.path.isdir(os.path.join(modppi_path,"data")): os.makedirs(os.path.join(modppi_path,"data"))
+          			if not os.path.isdir(os.path.join(modppi_path,"blast")):os.makedirs(os.path.join(modppi_path,"blast"))
+        		except:
+          			print "ERROR: You don't have permissions in this folder"
+          			exit(0)
+			config.set('Paths', 'data_path', os.path.join(".", "data"))
+			config.set('Paths', 'blast_dir',  os.path.join(".", "blast"))
+			config.set('Paths', 'pdb_path',  os.path.join(".", "data", "pdbsource"))
+			config.set('Paths', '3did_path',  os.path.join(".", "data", "3did"))
+			config.set('Files', 'fasta_list_file', os.path.join(".", "data", "nr.fa"))
+			config.set('Files', 'nr90_list_file', os.path.join(".", "data", "merged_nr90.fa"))
+			config.set('Files', 'ppi_files', os.path.join(".", "data", "pdb"))
+			config.set('Files', 'ddi_files', os.path.join(".", "data", "3did"))
+			config.set('Files', 'pdb_list_file', os.path.join(".", "data", "pdb.list"))
+			config.set('Files', '3did_list_file', os.path.join(".", "data", "3did.list"))
+			config.set('Files', 'database_file', os.path.join(".", "database.fasta"))
+		else:
+		 	data_path = raw_input("STRUCTURE) Insert the path to structural data files (should have pdbsource and 3did): ")
+                	data_path = data_path.lstrip()
+		 	while not find_file(data_path,"pdb*") or not  find_file(data_path,"3did"):
+                    	  data_path = raw_input("Insert the correct path to structural data files (pdbsource or 3did are not found), or press enter to skip and add it later manually to the config.ini file: ")
+                   	  data_path = data_path.lstrip()
+                   	  if not data_path:
+                   	     break;
+                   	  else:
+			     continue
+
+                 	if find_file(data_path,"pdb*") and find_file(data_path,"3did"):
+                    	  config.set('Paths', 'data_path',data_path)
+		 	  config.set('Paths', 'pdb_path',  os.path.join(data_path, "pdbsource"))
+		 	  config.set('Paths', '3did_path',  os.path.join(data_path, "3did"))
+			  config.set('Files', 'ppi_files', os.path.join(data_path, "pdb"))
+			  config.set('Files', 'ddi_files', os.path.join(data_path, "3did"))
+
+		 	blast_dir = raw_input("SEQUENCES) Insert the path to sequence data formatted by BLAST/2.2.26: ")
+			blast_dir = blast_dir.lstrip()
+		 	while not os.path.isdir(blast_dir):
+                    	  blast_dir = raw_input("Insert the correct path to sequence data files (folder not found), or press enter to skip and add it later manually to the config.ini file: ")
+                   	  blast_dir = blast_dir.lstrip()
+                   	  if not blast_dir:
+                   	     break;
+                 	  else:
+			     continue
+
+                	if os.path.isdir(blast_dir):
+                 	    config.set('Paths', 'blast_dir',blast_dir)
+			
+                        database_fasta = "database.fasta"
+                        while not find_file(blast_dir,database_fasta):
+                          database_fasta = raw_input("Insert the name of the sequence database ('database.fasta' by default),  or press enter to skip and add it later manually to the config.ini file: ")
+                          database_fasta = database_fasta.lstrip()
+                          if not database_fasta:
+                   	     break;
+                 	  else:
+			     continue
+
+                 	if find_file(blast_dir,database_fasta):
+			  config.set('Files', 'database_file', os.path.join(".", database_fasta))
+	
+
+                        fasta_list_file=os.path.join(data_path,"nr.fa")
+		        while not os.path.isfile(fasta_list_file):
+				fasta_list_file = raw_input("Insert the correct file of non-redundant sequences 'nr.fa', or press enter if it has to be created: ")
+				fasta_list_file = fasta_list_file.lstrip()
+				if not fasta_list_file: 
+					break
+				else:
+					continue
+                        if os.path.isfile(fasta_list_file):
+				config.set('Files', 'fasta_list_file',fasta_list_file)
+
+                        nr90_list_file=os.path.join(data_path,"merged_nr90.fa")
+		        while not os.path.isfile(nr90_list_file):
+				nr90_list_file = raw_input("Insert the correct file of non-redundant sequences merging PDB and 3DID 'merged_nr90.fa', or press enter if it has to be created: ")
+				nr90_list_file = nr90_list_file.lstrip()
+				if not nr90_list_file: 
+					break
+				else:
+					continue
+                        if os.path.isfile(nr90_list_file):
+				config.set('Files', 'nr90_list_file',nr90_list_file)
+                            
+                        pdb_list_file=os.path.join(data_path,"pdb.list")
+		        while not os.path.isfile(pdb_list_file):
+				pdb_list_file = raw_input("Insert the correct file of list of PDB 'pdb.list', or press enter if it has to be created: ")
+				pdb_list_file = pdb_list_file.lstrip()
+				if not pdb_list_file: 
+					break
+				else:
+					continue
+                        if os.path.isfile(pdb_list_file):
+				config.set('Files', 'pdb_list_file',pdb_list_file)
+
+
+                        did_list_file=os.path.join(data_path,"3did.list")
+		        while not os.path.isfile(did_list_file):
+				did_list_file = raw_input("Insert the correct file of list of 3DID '3did.list', or press enter if it has to be created: ")
+				did_list_file = did_list_file.lstrip()
+				if not did_list_file: 
+					break
+				else:
+					continue
+                        if os.path.isfile(did_list_file):
+				config.set('Files', '3did_list_file',did_list_file)
+                            
+                            
+
+
+
 		modeller_path = raw_input("1) Insert path to bin folder of Modeller: ")
 		modeller_path=modeller_path.lstrip()
 		while not find_file(modeller_path, "mod*.*"):
@@ -76,7 +169,7 @@ def main():
 		if find_file(modeller_path, "mod*.*"):
 			config.set('Paths', 'modeller_path', modeller_path)
 
-		blast_path = raw_input("2) Insert path to bin folder of BLAST: ")
+		blast_path = raw_input("2) Insert path to bin folder of BLAST/2.2.26: ")
 		blast_path =  blast_path.lstrip()
 		while which(os.path.join(blast_path, "blastpgp"))==False or os.path.isdir(blast_path)==False:
 			blast_path = raw_input ("Insert the correct path to executable of BLAST, or press enter to skip and add it later manually to the config.ini file: ")	
@@ -168,7 +261,7 @@ def main():
 
 		reduce_path = raw_input("6) Insert path to executable of reduce: ")
 		reduce_path = reduce_path.lstrip()
-		while os.path.isfile(reduce_path) == false:
+		while os.path.isfile(reduce_path) == False:
 			reduce_path = raw_input ("Insert the correct path to executable of reduce, or press enter to skip and add it later manually to the config.ini file: ")
 			reduce_path = reduce_path.lstrip()
 			if not reduce_path:
