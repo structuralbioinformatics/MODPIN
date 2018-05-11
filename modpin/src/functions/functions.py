@@ -664,12 +664,7 @@ def submit_command_to_queue(command, queue=None, max_jobs_in_queue=None, queue_f
       fd.close()
       queue_standard.close()
       if queue is not None:
-        if submit == "submit": 
-           os.system("%s -q %s %s" % (submit, queue,script))
-        elif submit == "sbatch": 
-           os.system("%s -p %s %s" % (submit, queue,script))
-        else:
-           os.system("%s -q %s %s" % (submit, queue,script))
+        os.system("%s -q %s %s" % (submit, queue,script))
       else:
         os.system("%s %s"% (submit,script))
     else:
@@ -725,7 +720,7 @@ def add_hydrogens(config,path,inp,out):
        os.system("%s -o %s >& hbplus.log"%(hbplus,inp))
      if relax == "yes":
        sys.stdout.write("\t\t\t-- Relaxing the hydrogen-intermediate model %s (see Rosetta output in relax.log and score.sc)...\n"%output_hbplus)
-       os.system("%s -s %s -in:file:fullatom -nstruct 1  >& relax.log"%(relax_exe,output_hbplus))
+       os.system("%s -s %s -in:file:fullatom -nstruct 1  -packing:repack_only >& relax.log"%(relax_exe,output_hbplus))
        opt_model=".".join(output_hbplus.split('.')[:-1])+"_0001.pdb"
        old_model=".".join(output_hbplus.split('.')[:-1])+"_non_optimized.pdb"
        shutil.move(output_hbplus,old_model)
@@ -734,7 +729,10 @@ def add_hydrogens(config,path,inp,out):
           if check_pdb.has_protein:
             check_pdb.clean()
             check_pdb.write(output_hbplus)
-            sys.path.remove(opt_model)
+            try:
+              sys.path.remove(opt_model)
+            except:
+              sys.stdout.write("\t\t\t-- Keeping old file %s ...\n"%opt_model)
           else:
             shutil.copy(old_model,output_hbplus)
        else:

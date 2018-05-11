@@ -415,6 +415,7 @@ def parser_list_of_models(input_list,options):
          path_array= line.strip().split("/")
          path_file = "/".join([str(x) for x in path_array[:-1]])
          input_file=path_array[-1]
+         if not fileExist(os.path.join(path_file,input_file)): continue
          if input_file.split(".")[-1]=="pdb":
           output_file=path_file+"/"+".".join([str(x) for x in input_file.split(".")[:-1]])+".h"
          else:
@@ -459,6 +460,7 @@ def parser_list_of_models(input_list,options):
           path_file = "/".join([str(x) for x in path_array[:-1]])
           input_file=path_array[-1]
           output_file=path_file+"/"+input_file
+          if not fileExist(os.path.join(path_file,input_file)): continue
           if renumerate:
             if verbose: sys.stdout.write("\t\t-- Renumerate residues as original sequences (%s %s) in %s\n"%(pair[0],pair[1],input_file))
             sequences_complex = {}
@@ -476,6 +478,7 @@ def parser_list_of_models(input_list,options):
                 sys.stderr.write("WARNING %s\n"%e)
             else:
              sys.stdout.write('\t\t\t-- Skip renumbering of %s (missing FastA sequences %s %s)\n'%(input_file,pair[0],pair[1]))
+        fd.close()
 
     # Informe on the files parsed
     if options.show:
@@ -530,6 +533,7 @@ def parser_list_of_models(input_list,options):
         grouped="\t"
         for p in s:
           pdb=pdbdir_wt+"/"+p
+          if not fileExist(pdb): continue
           fd.write("%s\n"%(pdb))
           if p != c:
             z=0.0
@@ -593,6 +597,7 @@ def parser_list_of_models(input_list,options):
          grouped="\t"
          for p in s:
           pdb=pdbdir+"/"+p
+          if not fileExist(pdb): continue
           fd.write("%s\n"%(pdb))
           if p != c:
             z=0.0
@@ -614,6 +619,7 @@ def parser_list_of_models(input_list,options):
          grouped="\t"
          for p in s:
           pdb=pdbdir+"/"+p
+          if not fileExist(pdb): continue
           fd.write("%s\n"%(pdb))
           if p != c:
             z=0.0
@@ -730,6 +736,7 @@ def compare_interface_sequences(list_of_models,dummy_dir):
           for line in  filelist:
             n=n+1
             pdb_file=line.strip()
+            if not fileExist(pdb_file):continue
             pdb=PDB(pdb_file)
             chains=[x for x in pdb.chain_identifiers]
             a_index={}
@@ -900,6 +907,7 @@ def extract_main_sequence(list_of_models,wt_of_pair):
             filelist=open(pose_list,"r")
             for line in  filelist:
               pdb_file=line.strip()
+              if not fileExist(pdb_file):continue
               try:
                 pdb=PDB(pdb_file)
                 chains=[x for x in pdb.chain_identifiers]
@@ -908,7 +916,7 @@ def extract_main_sequence(list_of_models,wt_of_pair):
                 sequence.setdefault(a,[]).append(p.protein_sequence)
                 sequence.setdefault(b,[]).append(q.protein_sequence)
               except Exception as e:
-                sys.stdout.write("WARNING: file not found, skip %s \n"%pdb_file)
+                sys.stdout.write("WARNING: file is wrong, skip %s \n"%pdb_file)
                 sys.stderr.write("ERROR: %s\n"%e)
             filelist.close()
             if sequence.has_key(a): 
