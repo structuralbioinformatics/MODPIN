@@ -835,6 +835,16 @@ def modelling(queriesA_original,queriesB_original,queriesA, queriesB, hit_items_
           model_name = '%s_%s_%d-%d::%s_%s_%d-%d#%d.pdb' %(template_id_A, template_chain_A_chain, current_sections[0][0], current_sections[0][1], template_id_B, template_chain_B_chain, current_sections[1][0], current_sections[1][1],imodel)
           model_path_model = os.path.join(model_path , model_name)
           if fileExist(os.path.abspath('%s' %(input_model))):
+            # Check contacts
+            check_pdb_obj=PDB(os.path.abspath('%s' %(input_model)))
+            PPI_threshold_type = config.get('Parameters', 'PPI_threshold_type')
+            PPI_distance_threshold = float(config.get('Parameters', 'PPI_distance_threshold'))
+            check_protein_complex = Complex(check_pdb_obj, PPI_type = PPI_threshold_type, PPI_distance = PPI_distance_threshold)
+            if len(check_protein_complex.PPInterfaces[0].contacts) == 0:
+              if verbose: sys.stdout.write("\t\t\t-- Skip model without contacts %s\n"%model_name)
+              continue
+            else:
+              if verbose: sys.stdout.write("\t\t\t-- Accepted model %s\n"%model_name)
             if hydrogens:
               if verbose: sys.stdout.write("\t\t\t-- Adding hydrogens and relaxing the model %s\n"%model_name)
               output_model=model_name
@@ -873,7 +883,6 @@ def modelling(queriesA_original,queriesB_original,queriesA, queriesB, hit_items_
 
 
   
-
 
 # MAIN ###########################################################################################################
 
