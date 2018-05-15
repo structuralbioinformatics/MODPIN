@@ -28,7 +28,7 @@ def main():
 	config.set('Parameters','PPI_distance_threshold','8.0')
 	config.set('Parameters','PPI_distance_threshold_shell','15.0')
 	config.set('Parameters','PPI_threshold_type','cb')
-	config.set('Parameters','overlap_interface','5.0')
+	config.set('Parameters','overlap_interface','35.0')
 	config.set('Parameters','min_ratio_common_poses','0.49')
 	config.set('Parameters','n_parameter_twilight_zone','0')
 	config.set('Parameters','extension_threshold','15')
