@@ -219,6 +219,21 @@ def main():
 			config.set('Paths', 'rosetta_path', rosetta_path)
 
 			relax_exe = os.path.join(rosetta_path, "source", "bin", "fixbb.linuxgccrelease")
+                        if find_file( os.path.join(rosetta_path, "source", "bin"),"fixbb*"): 
+                           sys.stdout.write("\t-- Found fixbb, default to be used for relaxing the structures: %s\n"%found_file(os.path.join(rosetta_path, "source", "bin"),"fixbb*"))
+                           relax_exe = os.path.join(rosetta_path, "source", "bin", found_file(os.path.join(rosetta_path, "source", "bin"),"fixbb*"))
+                        elif find_file( os.path.join(rosetta_path,"bin"),"fixbb*"):
+                           sys.stdout.write("\t-- Found fixbb, default to be used for relaxing the structures: %s\n"%found_file(os.path.join(rosetta_path,"bin"),"fixbb*"))
+                           relax_exe = os.path.join(rosetta_path, "bin", found_file(os.path.join(rosetta_path, "bin"),"fixbb*"))
+                        elif find_file( os.path.join(rosetta_path,"source","bin"),"relax*"):
+                           sys.stdout.write("\t-- Found relax, default to be used for relaxing the structures: %s\n"%found_file(os.path.join(rosetta_path, "source", "bin"),"relax*"))
+                           relax_exe = os.path.join(rosetta_path, "source", "bin", found_file(os.path.join(rosetta_path, "source","bin"),"relax*"))
+                        elif find_file( os.path.join(rosetta_path,"bin"),"relax*"):
+                           sys.stdout.write("\t-- Found relax, default to be used for relaxing the structures: %s\n"%found_file(os.path.join(rosetta_path, "bin"),"relax*"))
+                           relax_exe = os.path.join(rosetta_path, "bin", found_file(os.path.join(rosetta_path, "bin"),"relax*"))
+			else:
+                           sys.stdout.write("\t-- Neither FIXBB nor RELAX executables were found under ROSETTA path\n")
+                              
 			if os.path.isfile(relax_exe)== True:
 				config.set('Paths', 'relax_exe', relax_exe)
 			else: 
@@ -233,6 +248,15 @@ def main():
 
 
 			interface_analyzer = os.path.join(rosetta_path, "source", "bin", "InterfaceAnalyzer.linuxgccrelease")
+                        if find_file( os.path.join(rosetta_path, "source", "bin"),"InterfaceAnalyzer*"):
+                          sys.stdout.write("\t-- Found InterfaceAnalyzer: %s\n"%found_file(os.path.join(rosetta_path, "source", "bin"),"InterfaceAnalyzer*"))
+			  interface_analyzer = os.path.join(rosetta_path, "source", "bin", found_file(os.path.join(rosetta_path, "source", "bin"),"InterfaceAnalyzer*"))
+                        elif find_file(os.path.join(rosetta_path, "bin"),"InterfaceAnalyzer*"):
+                          sys.stdout.write("\t-- Found InterfaceAnalyzer: %s\n"%found_file(os.path.join(rosetta_path,  "bin"),"InterfaceAnalyzer*"))
+			  interface_analyzer = os.path.join(rosetta_path, "bin", found_file(os.path.join(rosetta_path,  "bin"),"InterfaceAnalyzer*"))
+			else:
+                           sys.stdout.write("\t-- INTERFACEANALYZER executable was not found under ROSETTA path\n")
+
 			if os.path.isfile(interface_analyzer)== True:
 				config.set('Paths', 'interface_analyzer', interface_analyzer)
 			else: 
@@ -326,6 +350,19 @@ def find_file(path, pattern):
 			else:
 				return False
                         return found
+
+def found_file(path, pattern):
+			p =pattern
+                        found=False
+			if os.path.exists(path):
+				for file in os.listdir(path):
+                                        if found: break
+					if fnmatch.fnmatch(file, p):
+						found=True
+                                                found_file=file
+			else:
+				return False
+                        return found_file
 	
 #check if exe path inserted by user exists
 def which(program):
