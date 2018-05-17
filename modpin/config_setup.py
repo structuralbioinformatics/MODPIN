@@ -106,7 +106,6 @@ def main():
 
                  	if find_file(blast_dir,database_fasta):
 			  config.set('Files', 'database_file', os.path.join(".", database_fasta))
-	
 
                         fasta_list_file=os.path.join(data_path,"nr.fa")
 		        while not os.path.isfile(fasta_list_file):
