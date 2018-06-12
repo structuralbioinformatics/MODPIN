@@ -664,7 +664,12 @@ def submit_command_to_queue(command, queue=None, max_jobs_in_queue=None, queue_f
       fd.close()
       queue_standard.close()
       if queue is not None:
-        os.system("%s -q %s %s" % (submit, queue,script))
+       if  submit=="qsub":
+          os.system("%s -q %s %s" % (submit, queue,script))
+       elif submit=="sbatch":
+          os.system("%s -p %s %s" % (submit, queue,script))
+       else:
+          os.system("%s %s"% (submit,script))
       else:
         os.system("%s %s"% (submit,script))
     else:
