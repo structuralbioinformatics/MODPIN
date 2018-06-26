@@ -396,6 +396,9 @@ def parser_list_of_models(input_list,options):
             if len(name.split("|")) == 2:
                name1 = name.split("|")[1]
                name2 = name.split("|")[1]
+            if len(name.split("|"))<=1:
+               name1 = name
+               name2 = name
             seq  = protein.get_sequence()
             if len(seq) > 0:
                 try:
@@ -916,7 +919,7 @@ def extract_main_sequence(list_of_models,wt_of_pair):
                 sequence.setdefault(a,[]).append(p.protein_sequence)
                 sequence.setdefault(b,[]).append(q.protein_sequence)
               except Exception as e:
-                sys.stdout.write("WARNING: file is wrong, skip %s \n"%pdb_file)
+                sys.stdout.write("WARNING: file not found, skip %s \n"%pdb_file)
                 sys.stderr.write("ERROR: %s\n"%e)
             filelist.close()
             if sequence.has_key(a): 
