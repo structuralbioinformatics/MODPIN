@@ -109,12 +109,13 @@ def FEP (A,B):
   T      = 300.0
   (ZA,p) = partition_function( A )
   x      = 0.0
-  for m,e in A.iteritems():
+  for m,ee in A.iteritems():
+    #e=float(ee) -p
+    e=float(ee)
     if B.has_key(m):
        try:
-         #d = float(B.get(m)) - float(A.get(m))  - p
          d = float(B.get(m)) - float(A.get(m)) 
-         if np.exp(d/(kB*T)) < 1.0e+16: x = x + np.exp( -d/(kB*T) ) / ZA
+         if np.exp(d/(kB*T)) < 1.0e+16: x = x + np.exp( -d/(kB*T) ) * np.exp(-e/(kB*T)) / ZA
        except  Exception as err:
          sys.stderr.write("ERROR: %s\n"%err)
          sys.stderr.write("ERROR: %s %s\n"%(m,str(e)))
