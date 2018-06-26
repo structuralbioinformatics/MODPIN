@@ -150,6 +150,9 @@ for input_file in files:
    if input_file.endswith(".ppi"): 
       ppi_sets.add(input_file)
 
+global_output = os.path.join(input_dir,"FEP_"+score+"_Z_with_"+energy+".out")
+fg = open(global_output,"w")
+fg.write("%5s\t%10s\t%10s\t%10s\t%10s\t%s\n"%("#ppi","FEP direct","FEP invers","<FEP>","Diff.score","PPI models"))
 for file_ppi in ppi_sets:
     output = os.path.join(input_dir,file_ppi+"_"+score+"_Z_with_"+energy+".out")
     print "Write Output in %s"%(output)
@@ -265,9 +268,10 @@ for file_ppi in ppi_sets:
                FEP_invers   = FEP(E_type,E_wt)
                FEP_average  = (FEP_direct - FEP_invers)/2
                fo.write("%5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,delta_scr,type_file))
+               fg.write("%5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,delta_scr,type_file))
                print "Add %5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,delta_scr,type_file)
     fo.close()
-         
+fg.close()         
 print "Done"
 
     
