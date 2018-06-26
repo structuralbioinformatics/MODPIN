@@ -194,10 +194,16 @@ python scripts/modelist.py -i example/unrewiring_mutants.dat  -l UNREWIRED -seq 
 #         This produces a selection of clustered interfaces for each complex with mutant forms compared with the wild type 
 #         according to two statistics (Mann-Whitney and Kolmnorov-Smirnov). 
 #         Plots are collected in the output folders  example/rewired and example/unrewired
+#         Then we can run Exponential_Averaging_FEP.py that uses the selected folder (i.e. example/rewired and example/unrewired)
+#         to calculate the differences of Free Energy between wild-type and mutant forms using Zwanzig formulae
+#         The partition finction Z is calculated with the score of the last variable (ie. ddG_mean) and the variable to compare is the
+#         first selected (i.e. dGx_mean, from dG_cross of Rosetta)
+#
 
 python src/functions/select_cluster.py example/rewired
 python src/functions/select_cluster.py example/unrewired
-
+python src/functions/Exponential_Averaging_FEP.py  example/rewired  dGx_mean ddG_mean
+python src/functions/Exponential_Averaging_FEP.py  example/unrewired  dGx_mean ddG_mean
 
 
 
