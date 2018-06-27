@@ -198,7 +198,7 @@ for file_ppi in ppi_sets:
        fd=open(ddg_wt_path,"r")
        for line in fd:
          model_file,ene = line.split()
-         if model_file.endswith(".h"):
+         if model_file.endswith(".h") or model_file.endswith(".h_AB") or model_file.endswith(".h_BA"):
             model = os.path.basename(model_file)
             E_wt.setdefault(model,float(ene))
        fd.close()
@@ -208,7 +208,7 @@ for file_ppi in ppi_sets:
        fd=open(scr_wt_path,"r")
        for line in fd:
          model_file,scr = line.split()
-         if model_file.endswith(".h"):
+         if model_file.endswith(".h") or model_file.endswith(".h_AB") or model_file.endswith(".h_BA"):
             model = os.path.basename(model_file)
             S_wt.setdefault(model,float(scr))
        fd.close()
@@ -246,7 +246,7 @@ for file_ppi in ppi_sets:
                fd=open(ddg_type_path,"r")
                for line in fd:
                  model_file,ene = line.split()
-                 if model_file.endswith(".h"):
+                 if model_file.endswith(".h") or model_file.endswith(".h_AB") or model_file.endswith(".h_BA"):
                     model = os.path.basename(model_file)
                     E_type.setdefault(model,float(ene))
                fd.close()
@@ -256,7 +256,7 @@ for file_ppi in ppi_sets:
                fd=open(scr_type_path,"r")
                for line in fd:
                  model_file,scr = line.split()
-                 if model_file.endswith(".h"):
+                 if model_file.endswith(".h") or model_file.endswith(".h_AB") or model_file.endswith(".h_BA") :
                     model = os.path.basename(model_file)
                     S_type.setdefault(model,float(scr))
                fd.close()
