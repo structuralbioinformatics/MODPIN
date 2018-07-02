@@ -95,9 +95,12 @@ def average_ensemble (S,E):
   for m,ee in E.iteritems():
       #e=float(ee) - p
       e=float(ee)
-      if S.has_key(m):
+      mAB=m+"_AB"
+      mBA=m+"_BA"
+      if S.has_key(m) or S.has_key(mAB) or S.has_key(mBA):
          try:
-           if np.exp(e/(kB*T)) < 1.0e+16: a = a + float(S.get(m)) * np.exp( -e/(kB*T) ) / Z
+           if S.has_key(m):   if np.exp(e/(kB*T)) < 1.0e+16: a = a + float(S.get(m)) * np.exp( -e/(kB*T) ) / Z
+           elif S.has_key(mAB) or S.has_key(mBA): if np.exp(e/(kB*T)) < 1.0e+16: a = a + float(S.get(mAB)) * np.exp( -e/(kB*T) ) / Z
          except  Exception as err:
            sys.stderr.write("ERROR: %s\n"%err)
            sys.stderr.write("ERROR: %s %s\n"%(m,str(e)))
