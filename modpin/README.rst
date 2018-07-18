@@ -155,6 +155,8 @@ python scripts/modppi.py -init_blast -3did -v
 #   Add hydrogen atoms on the models
 #   Skip checking the database of known interactions and their sequences
 #   
+#   NOTE: Sequence names should not use symbol "-" or ":" because both are used to model sub-regions or interactions
+#         Mutant forms should be indicated with "_" and the mutation definition (i.e. L53R) at the end of the sequence name (see further)
 #
 
 python scripts/modppi.py -seq example/baxbid.fa -ppi example/baxbid.ppi -o example/BAX_BID -d ./dummy -v --hydrogens -skip -force -3did -n 5 --renumerate
