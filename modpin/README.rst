@@ -155,6 +155,8 @@ python scripts/modppi.py -init_blast -3did -v
 #   Add hydrogen atoms on the models
 #   Skip checking the database of known interactions and their sequences
 #   
+#   NOTE: Sequence names should not use symbol "-" or ":" because both are used to model sub-regions or interactions
+#         Mutant forms should be indicated with "_" and the mutation definition (i.e. L53R) at the end of the sequence name (see further in EXAMPLE 3)
 #
 
 python scripts/modppi.py -seq example/baxbid.fa -ppi example/baxbid.ppi -o example/BAX_BID -d ./dummy -v --hydrogens -skip -force -3did -n 5 --renumerate
@@ -174,7 +176,7 @@ python scripts/analysis.py -o example/BAX_BID/ -l BAX_BID -zrank -v -d dummy -bo
 #  b) >sp|P55957_R84W|BID_HUMAN_R84W  and >sp|P55957|BID_HUMAN   show a wild type protein with accession P55957 and entry BID_HUMAN  and its mutant form R84W
 #
 #  Non-allowed forms are BID_R84W_HUMAN or sp|BID_HUMAN_R84W|P55957_R84W
-#
+#  A label can be added to classify your results or repeat a different run. However, the label should not contain symbols "_" , "-", ":" or white spaces, we recommend only alphanumeric symbols
 #
 #  Step 1: Create models of two large sets of mutations involving rewiring and unrewiring (hydrogens and relaxation won't be added in order to fasten up the obtantion of the models)
 #
