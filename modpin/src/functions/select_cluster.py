@@ -43,8 +43,6 @@ from SBI.structure.contacts import Complex
 from SBI.sequence import Sequence
 from SBI.structure import PDB
 
-def fileExist (file):
- return os.path.exists(file) and os.path.isfile(file)
 
 
 if len(sys.argv)==1:
