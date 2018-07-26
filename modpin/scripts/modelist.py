@@ -29,7 +29,7 @@ src_path = os.path.join(config.get('Paths','modppi_path'),config.get('Paths','sb
 sys.path.append(src_path)
 
 # Add functions path to sys.path
-src_path = os.path.join(config.get('Paths','modppi_path'),config.get('Paths','functions_path'))
+src_path = os.path.join(config.get('Paths','modppi_path'),os.path.dirname(config.get('Paths','functions_path')))
 sys.path.append(src_path)
 
 # Import functions
@@ -69,6 +69,7 @@ def main():
 
     if label is None:
        label=query_list.split("/")[-1]
+    job_label = label + '_'
 
     if not os.path.exists(outdir): os.makedirs(outdir)
     make_subdirs(outdir, subdirs =['models'])
@@ -139,14 +140,14 @@ def main():
       if parallel:
        if  config.get("Cluster", "cluster_queue") == "None": cluster_queue=None
        else: cluster_queue=config.get("Cluster", "cluster_queue")
-       functions.submit_command_to_queue("%s %s %s -seq %s -ppi %s -o %s -d %s" % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'modppi.py'), flags, os.path.abspath(fasta), os.path.abspath(ppi), os.path.abspath(modeldir), cluster_dummy_dir),cluster_queue, int(config.get("Cluster", "max_jobs_in_queue")),os.path.join(scripts_path,config.get("Cluster","command_queue")),cluster_dummy_dir,config.get("Cluster","cluster_submit"),config.get("Cluster","cluster_qstat"))
+       functions.submit_command_to_queue("%s %s %s -seq %s -ppi %s -o %s -d %s" % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'modppi.py'), flags, os.path.abspath(fasta), os.path.abspath(ppi), os.path.abspath(modeldir), cluster_dummy_dir),cluster_queue, int(config.get("Cluster", "max_jobs_in_queue")),os.path.join(scripts_path,config.get("Cluster","command_queue")),cluster_dummy_dir,config.get("Cluster","cluster_submit"),config.get("Cluster","cluster_qstat"), job_label=job_label)
       else:
        os.system("%s %s %s -seq %s -ppi %s -o %s -d %s" % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'modppi.py'), flags, os.path.abspath(fasta), os.path.abspath(ppi), os.path.abspath(modeldir),dummy_dir))
- 
+
     if parallel and analysis and not cont:
       sys.stderr.write("Wait until all submissions have finished, then run again with flag '--continue'\n")
-      exit(0)  
-      
+      exit(0)
+
     if analysis:
      pair_model={}
      interactions_done=open(os.path.join(modeldir,'interactions_done.list'),"r")
@@ -173,17 +174,19 @@ def main():
       if parallel:
        if  config.get("Cluster", "cluster_queue") == "None": cluster_queue=None
        else: cluster_queue=config.get("Cluster", "cluster_queue")
-       functions.submit_command_to_queue("%s %s -l %s -ppi %s --hydrogens --renumerate -zrank -boxplot -v -d %s -o %s -seq %s " % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'analysis.py'),   label+"_"+wt[0]+"_"+wt[1], os.path.abspath(os.path.join(outdir,label+"_"+wt[0]+"_"+wt[1]+".list")), cluster_dummy_dir, os.path.abspath(outdir),os.path.abspath(fasta) ), cluster_queue, int(config.get("Cluster", "max_jobs_in_queue")),os.path.join(scripts_path,config.get("Cluster","command_queue")),cluster_dummy_dir,config.get("Cluster","cluster_submit"),config.get("Cluster","cluster_qstat"))
-      else:  
-       os.system("%s %s  -l %s -ppi %s --hydrogens --renumerate -zrank -boxplot -v -d %s -o %s -seq %s " % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'analysis.py'),   label+"_"+wt[0]+"_"+wt[1], os.path.abspath(os.path.join(outdir,label+"_"+wt[0]+"_"+wt[1]+".list")), dummy_dir,os.path.abspath(outdir),os.path.abspath(fasta))) 
- 
+       functions.submit_command_to_queue("%s %s -l %s -ppi %s --hydrogens --renumerate -zrank -boxplot -v -d %s -o %s -seq %s " % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'analysis.py'),   label+"_"+wt[0]+"_"+wt[1], os.path.abspath(os.path.join(outdir,label+"_"+wt[0]+"_"+wt[1]+".list")), cluster_dummy_dir, os.path.abspath(outdir),os.path.abspath(fasta) ), cluster_queue, int(config.get("Cluster", "max_jobs_in_queue")),os.path.join(scripts_path,config.get("Cluster","command_queue")),cluster_dummy_dir,config.get("Cluster","cluster_submit"),config.get("Cluster","cluster_qstat"), job_label=job_label)
+      else:
+       os.system("%s %s  -l %s -ppi %s --hydrogens --renumerate -zrank -boxplot -v -d %s -o %s -seq %s " % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'analysis.py'),   label+"_"+wt[0]+"_"+wt[1], os.path.abspath(os.path.join(outdir,label+"_"+wt[0]+"_"+wt[1]+".list")), dummy_dir,os.path.abspath(outdir),os.path.abspath(fasta)))
 
-      
-    sys.stdout.write("All requested submissions are done.\n")
-      
-        
-       
-     
+    if options.wait_for_cluster and parallel:
+     if not functions.wait_until_jobs_finish(qstat=config.get("Cluster","cluster_qstat"), job_label=job_label):
+      sys.stdout.write("Some submissions may still be running.\n")
+    elif parallel:
+     sys.stdout.write("Some submissions may still be running.\n")
+    else:
+     sys.stdout.write("All requested submissions are done.\n")
+
+
 def parse_user_arguments(*args, **kwds):
     parser = argparse.ArgumentParser(
         description = 'Automatic modelling of protein-protein interactions',
@@ -210,13 +213,15 @@ def parse_user_arguments(*args, **kwds):
                         help = 'Flag to continue with analysis after all models are done in a cluster (default is False)')
     parser.add_argument('-v', '--verbose', dest = 'show', action = 'store_true',
                         help = 'Flag for verbose mode (default is False)')
-    parser.add_argument("-j","--parallel", default=False, action="store_true", dest="parallel", 
+    parser.add_argument("-j","--parallel", default=False, action="store_true", dest="parallel",
                         help="Submit JOBS to Queues in parallel (default = False)")
     parser.add_argument('-hydro','--hydrogens', dest = 'hbplus', action = 'store_true',
                         help = 'Flag to include hydrogens in modelling (default is False, and always True for analyses)')
     parser.add_argument('-r','--renumerate', dest = 'renumerate' , action = 'store_true',
                         help = 'Flag to renumber the sequences as in the original FastA (default is False, and always True for analyses)')
- 
+    parser.add_argument('-w','--wait', dest = 'wait_for_cluster' , action = 'store_true',
+                        help = 'Wait until all cluster jobs are finished before exiting (default False)')
+
     options = parser.parse_args()
     return options
 
