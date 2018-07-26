@@ -29,7 +29,7 @@ src_path = os.path.join(config.get('Paths','modppi_path'),config.get('Paths','sb
 sys.path.append(src_path)
 
 # Add functions path to sys.path
-src_path = os.path.join(config.get('Paths','modppi_path'),config.get('Paths','functions_path'))
+src_path = os.path.join(config.get('Paths','modppi_path'),os.path.dirname(config.get('Paths','functions_path')))
 sys.path.append(src_path)
 
 # Import functions
