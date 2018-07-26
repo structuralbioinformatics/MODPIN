@@ -6,6 +6,7 @@ import json
 import numpy
 import subprocess
 import pwd
+import time
 
 # Add "." to sys.path #
 sys.path.append(os.path.dirname(__file__))
@@ -636,7 +637,7 @@ def get_nodes(edges):
 #-------------#
 # Cluster     #
 #-------------#
-def submit_command_to_queue(command, queue=None, max_jobs_in_queue=None, queue_file=None, dummy_dir="/tmp", submit="qsub", qstat="qstat"):
+def submit_command_to_queue(command, queue=None, max_jobs_in_queue=None, queue_file=None, dummy_dir="/tmp", submit="qsub", qstat="qstat", job_label=""):
     """
     This function submits any {command} to a cluster {queue}.
 
@@ -654,7 +655,7 @@ def submit_command_to_queue(command, queue=None, max_jobs_in_queue=None, queue_f
 
     cwd = os.path.join(dummy_dir,"sh")
     if not os.path.exists(cwd): os.makedirs(cwd)
-    script= os.path.join(cwd,"submit_"+hashlib.sha224(command).hexdigest()+".sh")
+    script= os.path.join(cwd,"submit_" + job_label + hashlib.sha224(command).hexdigest() + ".sh")
     if queue_file is not None:
       fd=open(script,"w")
       with open(queue_file,"r") as queue_standard:
@@ -688,11 +689,24 @@ def number_of_jobs_in_queue(qstat="qstat"):
 
     # Initialize #
     user_name = get_username()
-
     process = subprocess.check_output([qstat, "-u", user_name])
 
     return len([line for line in process.split("\n") if user_name in line])
 
+def number_of_relevant_jobs_in_queue(qstat="qstat", job_label=""):
+    """
+    Returns the number of jobs in the queue that have the current user and the
+    current job label.
+    """
+    user_name = get_username()
+
+    if qstat == "qstat":
+        process = subprocess.check_output("{} -f | grep -C 1 {}@".format(qstat, user_name), shell=True)
+    else:
+        process = subprocess.check_output('{} -u {} --format="%u %j"'.format(qstat, user_name), shell=True)
+
+    job_re = re.compile(r'\ssubmit_{}'.format(re.escape(job_label)))
+    return len([line for line in process.split("\n") if user_name in line and job_re.search(line)])
 
 def get_username():
     """
@@ -702,6 +716,23 @@ def get_username():
 
     return pwd.getpwuid(os.getuid())[0]
 
+def wait_until_jobs_finish(qstat="qstat", job_label=""):
+    """
+    Waits until jobs with name formatted as 'submit_{job_label}*' are gone from
+    the queue, then returns True. If the process is interrupted, returns False.
+    """
+    last_num = 1e5
+    while last_num > 0:
+        try:
+            new_num = number_of_relevant_jobs_in_queue(qstat=qstat, job_label=job_label)
+            if new_num > 0:
+                if new_num != last_num:
+                    print("Waiting for {} jobs to complete...".format(new_num))
+                time.sleep(5)
+            last_num = new_num
+        except KeyboardInterrupt:
+            return False
+    return True
 
 def add_hydrogens(config,path,inp,out):
     #Initialize
