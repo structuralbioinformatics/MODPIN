@@ -218,4 +218,60 @@ python src/functions/Exponential_Averaging_FEP.py  example/unrewired  dGx_mean d
 
 python scripts/Renumerate.py -f example/sequences_Marc_Vidal.fasta -p example/test4renumber.pdb -d dummy -l example/renumerate_P02792_H133P_P02794.dat -o example/renumbered.pdb -v -hydro
 
+# EXAMPLE 5: Analyse change of energy in mutations of SKEMPI
+
+# First we need to parse the data of SKEMPI, this can be done with the parser parser_skempi2ModPIN.py
+# -Download data from SKEMPI: table skempi_v2.csv and PDB files in folder PDBs
+# -Run the parser for a maximum number of mutations in both chains (M=2)
+#
+
+python parser_skempi2ModPIN.py -i skempi_v2.csv -p ./PDBs -o modppi_skempi_short -v -m 2
+
+# This generates the files 
+
+ modppi_skempi_short.ddG  
+ modppi_skempi_short.fa   
+ modppi_skempi_short.ppi
+
+# Then we can run modelist with modppi_skempi_short.ppi and modppi_skempi_short.fa
+
+python scripts/modelist.py -i example/modppi_skempi_short.ppi  -l SKEMPI -seq example/modppi_skempi_short.fa -o example/SKEMPI -n 3 -d dummy -3did -v --parallel -opt  --renumerate 
+python scripts/modelist.py -i example/modppi_skempi_short.ppi  -l SKEMPI -seq example/modppi_skempi_short.fa -o example/SKEMPI -n 3 -d dummy -3did -v --parallel -opt -a --continue --hydrogens --renumerate 
+ 
+# For analysing the energies we can run the bash script:
+
+
+set home="<MODPIN HOME>"
+
+foreach type ( "example/SKEMPI/")
+
+set models=`ls ${type}/models`
+echo $models
+
+foreach score ( "ddG_all" "ddG_mean" "dGx_all" "dGx_mean" "zrank" "dSASA_all" "dSASAp_all" "dSASAh_all" "dSASA_mean" "dSASAp_mean" "dSASAh_mean")
+
+python  src/functions/select_cluster.py ${type} ${score}
+\rm  $home/${type}/${score}.rank
+
+foreach ene ( "ddG_all" "ddG_mean" "dGx_all" "dGx_mean" "zrank")
+python  src/functions/Exponential_Averaging_FEP.py ${type}  ${score} ${ene}
+end
+
+foreach i ( $models )
+
+ echo "cat  ${type}/models/${i}/*cluster_*${score}*out|fgrep ".h"  >>  $home/${type}/${score}.rank"
+ cat  ${type}/models/${i}/*cluster_*${score}*out|fgrep ".h"  >>  $home/${type}/${score}.rank
+ echo "cat  ${type}/models/${i}/*cluster_*${score}*out|fgrep ".h" |sort -g -k 2  > $home/${type}/${score}_${i}.rank"
+ cat  ${type}/models/${i}/*cluster_*${score}*out|fgrep ".h" |sort -g -k 2  > $home/${type}/${score}_${i}.rank
+
+end
+end
+end
+
+# Finally, we can compare the predicted energies with the real ones, for example:
+
+
+python utils/Analyse_ddG_FEP.py -a example/modppi_skempi_short.ddG -b example/SKEMPI/FEP_zrank_Z_with_zrank.out -lp 1.0 -o compare_zrank_ddGskempi -v 
+
+
 

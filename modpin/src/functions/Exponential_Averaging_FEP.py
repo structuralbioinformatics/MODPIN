@@ -44,19 +44,39 @@ from SBI.structure.contacts import Complex
 from SBI.sequence import Sequence
 from SBI.structure import PDB
 
+#Parameters
+#Original Boltzman constant (kcal/molK):1.9872036e-3
+kBo  = 1.9872036e-3
+#Temperature
+T    = 300.0
+#Least Square lineal fitting using Affinity Benchmark
+#Maff = 0.115
+#Caff = -7.326
+#Maff = 1.0
+Maff = 0.0003
+
+
+#Boltzman constant fixed
+kB   = kBo/Maff
+
+
+
+def fileExist (file):
+ return os.path.exists(file) and os.path.isfile(file)
 
 def distribution(E):
   mean=0.0
   sigma=0.0
-  n=len([x for x in E.itervalues() if x<0])
+  nn=len([x for x in E.itervalues() if x<0])
+  n=len([x for x in E.itervalues()])
   minimum=0.0
   maximum=0.0
-  if n>1: minimum=min([x for x in E.itervalues() if x<0])
-  if n>1: maximum=max([x for x in E.itervalues() if x<0])
+  if n>1: minimum=min([float(x) for x in E.itervalues()])
+  if n>1: maximum=max([float(x) for x in E.itervalues()])
   if n<2 : return (mean,sigma,minimum,maximum)
   for m,ee in E.iteritems():
     if ee<0:
-      mean =mean +float(ee)/n
+      mean =mean +float(ee)/nn
       sigma=sigma+float(ee)*float(ee)/n
   sigma = sigma - mean*mean
   if sigma > 0: 
@@ -67,18 +87,17 @@ def distribution(E):
 
   
 def partition_function(E):
- kB = 1.9872036
  Z  = 0.0
- T  = 300.0
  (mean,sigma,minimum,maximum)=distribution(E)
- p=min([minimum+sigma,mean-3*sigma,minimum-(minimum/2)])    
- #print "mean %f sigma %f min %f max %f p %f"%(mean,sigma,minimum,maximum,p)
+ p=minimum    
+ #p=min([minimum+sigma,mean-3*sigma,minimum-(minimum/2)])    
  for m,ee in E.iteritems():
-   #e=float(ee) - p
-   e=float(ee)
+   e=(float(ee) - p)/(kB*T)
    try:
-     if np.exp(e/(kB*T)) > 1.0e+16 or np.exp(e/(kB*T)) < 1.0e-16: print "Out of limit Model %s is %f \n"%(m,e/(kB*T))
-     if np.exp(e/(kB*T)) < 1.0e+16: Z = Z + np.exp(-e/(kB*T))
+     if e > 1.0e+6: print "Out of limit Model %s is %f > 1.0e+6 \n"%(m,e)
+     if e < 1.0e+6 :  Z = Z + np.exp(-e)
+     if e >= 1.0e+6:  Z = Z 
+     if e<0: print "Out of limit Model %s is  %f < 0\n"%(m,e)
    except  Exception as err:
       sys.stderr.write("ERROR: %s\n"%err)
       sys.stderr.write("ERROR: %s %s\n"%(m,str(e)))
@@ -86,23 +105,14 @@ def partition_function(E):
  return (Z,p)
 
 def average_ensemble (S,E):
-  kB   = 1.9872036
-  T    = 300.0
   (Z,p)= partition_function( E )
   a    = 0.0
   for m,ee in E.iteritems():
-      #e=float(ee) - p
-      e=float(ee)
-      mAB=m+"_AB"
-      mBA=m+"_BA"
-      if S.has_key(m) or S.has_key(mAB) or S.has_key(mBA):
+      e=(float(ee) - p)/(kB*T)
+      if S.has_key(m):
          try:
-           if S.has_key(m):   
-              if np.exp(e/(kB*T)) < 1.0e+16: 
-                 a = a + float(S.get(m)) * np.exp( -e/(kB*T) ) / Z
-           elif S.has_key(mAB) or S.has_key(mBA): 
-              if np.exp(e/(kB*T)) < 1.0e+16: 
-                 a = a + float(S.get(mAB)) * np.exp( -e/(kB*T) ) / Z
+           if e < 1.0e+6:  a = a + float(S.get(m)) * np.exp( -e ) / Z
+           if e >= 1.0e+6: a = a
          except  Exception as err:
            sys.stderr.write("ERROR: %s\n"%err)
            sys.stderr.write("ERROR: %s %s\n"%(m,str(e)))
@@ -110,30 +120,36 @@ def average_ensemble (S,E):
   return a
 
 def FEP (A,B):
-  kB     = 1.9872036
-  T      = 300.0
   (ZA,p) = partition_function( A )
   x      = 0.0
+  data   = [ (float(B.get(m)) - float(A.get(m))) for m,ee in A.iteritems() if B.has_key(m) ]
+  if len(data) > 0: 
+     d_min  = min(data)
+  else:
+     return 0.0
   for m,ee in A.iteritems():
-    #e=float(ee) -p
-    e=float(ee)
+    e=(float(ee) - p)/(kB*T)
     if B.has_key(m):
        try:
-         d = float(B.get(m)) - float(A.get(m)) 
-         if np.exp(d/(kB*T)) < 1.0e+16: x = x + np.exp( -d/(kB*T) ) * np.exp(-e/(kB*T)) / ZA
+         d = float(B.get(m)) - float(A.get(m)) - d_min 
+         if e < 1.0e+6 and d/(kB*T)< 1.0e+6 :  x = x + np.exp( -d/(kB*T) ) * np.exp(-e)/ZA
+         if e >= 1.0e+6 or d/(kB*T)>=1.0e+6 :  x = x
        except  Exception as err:
          sys.stderr.write("ERROR: %s\n"%err)
          sys.stderr.write("ERROR: %s %s\n"%(m,str(e)))
          continue
-  fep = - kB * T * np.log(x)
+  if x>0:
+     fep = - kB * T * np.log(x) + d_min
+  else:
+     fep = d_min
   return fep
   
 
 if len(sys.argv)==1:
- sys.stdout.write("Excution is 'ensemble_statistic <directory>  <variable> <energy for Z>' \n \
-                   where directory is the output folder of modelist.py,  \n \
-                   'energy for Z' is the score to calculate Z using Zwanzig equation (ddG_mean by default), and \n \
-                   'variable' is the function to evaluate the comparison of exponential averages (ddG_mean by default)\n")
+ sys.stdout.write("   Execution is 'Exponential_Averaging_FEP.py <directory>    <variable>   <energy for Z>' \n \
+ -- where directory is the output folder of modelist.py,  \n \
+ -- 'energy for Z' is the score to calculate Z using Zwanzig equation (ddG_mean by default), and \n \
+ -- 'variable' is the function to evaluate the comparison of exponential averages (ddG_mean by default)\n")
  exit(0)
 
 input_dir=sys.argv[1]
@@ -149,6 +165,7 @@ else:
   score="ddG_mean"
 
 
+
 files=os.listdir(input_dir)
 
 ppi_sets=set()
@@ -158,12 +175,12 @@ for input_file in files:
 
 global_output = os.path.join(input_dir,"FEP_"+score+"_Z_with_"+energy+".out")
 fg = open(global_output,"w")
-fg.write("%5s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%s\n"%("#ppi","FEP direct","FEP invers","<FEP>","score WT","score MUT","Diff.score","PPI models"))
+fg.write("%5s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%s\n"%("#ppi","FEP direct","FEP invers","<FEP>","-kTln(Z'/Z)","score WT","score MUT","Diff.score","PPI models"))
 for file_ppi in ppi_sets:
     output = os.path.join(input_dir,file_ppi+"_"+score+"_Z_with_"+energy+".out")
     print "Write Output in %s"%(output)
     fo = open(output,"w")
-    fo.write("%5s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%s\n"%("#ppi","FEP direct","FEP invers","<FEP>","score WT","score MUT","Diff.score","PPI models"))
+    fo.write("%5s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%s\n"%("#ppi","FEP direct","FEP invers","<FEP>","-kTln(Z'/Z)","score WT","score MUT","Diff.score","PPI models"))
     ppis=[]
     fd=open(os.path.join(input_dir,file_ppi),'r')
     for line in fd:
@@ -237,8 +254,6 @@ for file_ppi in ppi_sets:
                           number_of_clusters.add(number_group[0])
            #print "Clusters %s"%number_of_clusters
            for number_group in number_of_clusters:
-                    #ddg_type_f < 1.0e+6ile=label+"_"+ppi[0]+"_"+ppi[1]+"_"+type_file+"_cluster_"+number_group+".list.ddG_mean."+root_ppi+".out"
-                    #scr_type_file=label+"_"+ppi[0]+"_"+ppi[1]+"_"+type_file+"_cluster_"+number_group+".list."+score+"."+root_ppi+".out"
                     ddg_type_file=root_ppi+"_"+type_file+"_cluster_"+number_group+".list."+energy+"."+root_ppi+".out"
                     scr_type_file=root_ppi+"_"+type_file+"_cluster_"+number_group+".list."+score +"."+root_ppi+".out"
                     files_ddg_type_path.add(os.path.join(input_dir,"models",type_file,ddg_type_file))
@@ -273,9 +288,12 @@ for file_ppi in ppi_sets:
                FEP_direct   = FEP(E_wt,E_type)
                FEP_invers   = FEP(E_type,E_wt)
                FEP_average  = (FEP_direct - FEP_invers)/2
-               fo.write("%5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,Scr_wt,Scr_type,delta_scr,type_file))
-               fg.write("%5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,Scr_wt,Scr_type,delta_scr,type_file))
-               print "Add %5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,Scr_wt,Scr_type,delta_scr,type_file)
+               (ZA,pA)      = partition_function( E_wt )
+               (ZB,pB)      = partition_function( E_type )
+               if ZA>0 and ZB>0: partition = - kB * T * np.log(ZB/ZA)
+               fo.write("%5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,partition,Scr_wt,Scr_type,delta_scr,type_file))
+               fg.write("%5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,partition,Scr_wt,Scr_type,delta_scr,type_file))
+               print "Add %5d\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%10.5e\t%s\n"%(n,FEP_direct,FEP_invers,FEP_average,partition,ZA,ZB,Scr_wt,Scr_type,delta_scr,type_file)
     fo.close()
 fg.close()         
 print "Done"
