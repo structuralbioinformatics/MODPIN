@@ -249,6 +249,7 @@ def main():
  outrank=outdir+"/Compare_ddG_with_average_"+label_out+"_"+score+".rank"
 
  max_pearson = 0.0
+ max_forms   = 1
  if p_threshold > 0:
    n_pval = int((1-p_threshold)/p_threshold)
    d_pval = (1-p_threshold)/n_pval
@@ -304,11 +305,12 @@ def main():
          if verbose: sys.stdout.write("Improved Pearson Correlation: %f P-value: %f Slope: %f Cut Y-axis: %f \n"%(pearson,prob,m,c))
          rank_cluster.setdefault((pv,rnk,perc),(pearson,prob,m,c,len(ave_list_reduced)))
 
-       if pearson > max_pearson:
+       if pearson > max_pearson or (pearson==max_pearson and len(ave_list)>max_forms) or (pearson==max_pearson and len(ave_list)==max_forms and rnk<select_rank):
           select_percentil   = perc
           select_p_threshold = pv
           select_rank        = rnk
           max_pearson        = pearson
+          max_forms          = len(ave_list)
 
  fo=open(outrank,"w")
  fo.write("#%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\n"%("rank","PMI","min.Pvalue","max.cluster","correlation","models","slope","Y-axis","two-tail-prob"))
