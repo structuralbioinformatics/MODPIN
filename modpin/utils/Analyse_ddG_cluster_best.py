@@ -265,7 +265,7 @@ def main():
 
  rank_cluster={}
  for perc in xrange(int(percentil),100,1):
-  for rnk in xrange(rank,0,-1):
+  for rnk in xrange(rank,1,-1):
    for pthr in xrange(n_pval):
        pv = p_threshold + d_pval * pthr
        if verbose: sys.stdout.write("Check P-value %f Rank %d Percentage of mutations in the interface %d \n"%(pv,rnk,perc))
@@ -273,7 +273,7 @@ def main():
        ddg_pred_dict={}
        for (file_name,analysis),result in comparison_all.iteritems(): 
         for cluster,overlap_b,overlap_a,form_b,form_a,data,pvalue,ave_b,ave_a,diff,ddg in sorted(result,key=lambda x: int(x[0]),reverse=True):
-          if pvalue < pv and int(cluster) < rnk:
+          if pvalue < pv and int(cluster) <=rnk:
             if (10*int(overlap_b) >= perc or len(form_b.split("_"))==1) and (10*int(overlap_a) >= perc or len(form_a.split("_"))==1):
                 if form_b < form_a:
                     ddg_real_dict.setdefault((form_b,form_a),ddg)
