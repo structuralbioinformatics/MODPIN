@@ -56,8 +56,12 @@ def parse_user_arguments(*args, **kwds):
                         help = 'Output rootname for files (default is output)')
     parser.add_argument('-f','--format_image',dest='format',action = 'store',default='png',
                         help = 'Format of the image in the output file: png(default), pdf, ps, eps and svg ')
+    parser.add_argument('-k','--factor_lambda',dest='factor_lambda',action = 'store',default='1.0',
+                        help = 'Factor factor_lambda to multiply the energies (default is 1) ')
     parser.add_argument('-v','--verbose',dest='verbose',action = 'store_true',
                         help = 'Verbose execution ')
+    parser.add_argument('-c','--clean_null',dest='clean_null',action = 'store',default=None,
+                        help = 'Clean ddG values near 0.0 because they are caused by errors (default is None, otherwise select a threshold near 0, i.e. 0.1)')
 
 
 
@@ -84,7 +88,11 @@ def main():
  for line in fa:
     if line.startswith("#"): continue
     form,ddg=line.split()
-    ddg_dict.setdefault(form,float(ddg))
+    if options.clean_null is not None:
+      if ddg < -float(options.clean_null) or ddg > float(options.clean_null):
+        ddg_dict.setdefault(form,float(ddg))
+    else:
+      ddg_dict.setdefault(form,float(ddg))
  fa.close()
 
 
@@ -99,15 +107,24 @@ def main():
     data=line.split()
     form=data[-1]
     if options.score:
-       if data[-2] is not "nan" and  data[-2] is not "inf": fep=float(data[6])
+       if data[-2] is not "nan" and  data[-2] is not "inf": fep=float(data[6])*float(options.factor_lambda)
     elif options.partition:
-       if data[4] is not "nan" and  data[4] is not "inf": fep=float(data[4])
+       if data[4] is not "nan" and  data[4] is not "inf": fep=float(data[4])*float(options.factor_lambda)
     else:
-       if data[3] is not "nan" and  data[3] is not "inf": fep=float(data[3])
+       if data[3] is not "nan" and  data[3] is not "inf": fep=float(data[3])*float(options.factor_lambda)
     if options.outlier_threshold is not None:
+     if options.clean_null is not None:
+      if fep < -float(options.clean_null) or fep > float(options.clean_null):
+        if fep < float(options.outlier_threshold) and fep > -float(options.outlier_threshold): fep_dict.setdefault(form,fep)
+     else:
       if fep < float(options.outlier_threshold) and fep > -float(options.outlier_threshold): fep_dict.setdefault(form,fep)
     else:
+     if options.clean_null is not None:
+      if fep < -float(options.clean_null) or fep > float(options.clean_null):
+        fep_dict.setdefault(form,fep)
+     else:
       fep_dict.setdefault(form,fep)
+      
  fb.close()
 
 

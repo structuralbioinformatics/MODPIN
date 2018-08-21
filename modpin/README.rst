@@ -270,8 +270,23 @@ end
 
 # Finally, we can compare the predicted energies with the real ones, for example:
 
+#Using Zwanzig approach on FEP:
 
 python utils/Analyse_ddG_FEP.py -a example/modppi_skempi_short.ddG -b example/SKEMPI/FEP_zrank_Z_with_zrank.out -lp 1.0 -o compare_zrank_ddGskempi -v 
 
+#Using the comparison of energy distributions from clusters of conformations with similar interface
+# by selecting the specific conditions of the cluster, such as the percentage of mutations in the interface (PMI)
+# the p-value of significance when comparing the distributions of two forms and the ranking of the cluster, whhich depends
+# on the number of models or conformations in the cluster
+
+python utils/Analyse_ddG_cluster.py -g example/SKEMPI/modppi_skempi_short.ddG -l "i1p0005r10" -d example/SKEMPI -e zrank -o example/SKEMPI/Selected -i 1.0 -p 0.005 -r 10 -lp 1.0  -v -k 0.01
+
+#But we can also use an automatic search of these conditions with the script:
+# where the conditions shown in the input are just the thresholds
+# i => the minimum PMI to start, up to 100% in steps of 1%
+# p => the minimum p-value to start, up to 1
+# r => the maximum rank, starting from 1
+
+python utils/Analyse_ddG_cluster_best.py -g example/SKEMPI/modppi_skempi_short.ddG -l "optim_rank" -d example/SKEMPI -e zrank -o example/SKEMPI/Selected -i 1.0 -p 0.005 -r 10 -lp 1.0  -v -k 1.0
 
 
