@@ -244,7 +244,7 @@ def main():
   for cluster,overlap_b,overlap_a,form_b,form_a,data,pvalue,ave_b,ave_a,diff,ddg in sorted(result,key=lambda x: int(x[0]),reverse=True):
     #print "Percentage mutation %s Cluster %s  Data %s \n"%(overlap,cluster,data)
     fo.write("Percentage of mutation in interface around %d %s and %d %s  Cluster %s  P-value: %f Average %s: %f Average %s: %f Difference: %f ddG: %f Data %s \n"%(10*int(overlap_b),"%",10*int(overlap_a),"%",cluster,pvalue,form_b,ave_b,form_a,ave_a,diff,ddg,data))
-    if pvalue < p_threshold and int(cluster) < rank:
+    if pvalue < p_threshold and int(cluster) <=rank:
         if (10*int(overlap_b) >= percentil or len(form_b.split("_"))==1) and (10*int(overlap_a) >= percentil or len(form_a.split("_"))==1):
             if form_b < form_a:
                 ddg_real_dict.setdefault((form_b,form_a),ddg)

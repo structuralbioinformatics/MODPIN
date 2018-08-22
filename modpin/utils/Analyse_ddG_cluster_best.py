@@ -265,7 +265,7 @@ def main():
 
  rank_cluster={}
  for perc in xrange(int(percentil),100,1):
-  for rnk in xrange(rank,1,-1):
+  for rnk in xrange(rank,0,-1):
    for pthr in xrange(n_pval):
        pv = p_threshold + d_pval * pthr
        if verbose: sys.stdout.write("Check P-value %f Rank %d Percentage of mutations in the interface %d \n"%(pv,rnk,perc))
