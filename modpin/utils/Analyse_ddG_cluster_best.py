@@ -305,7 +305,7 @@ def main():
          if verbose: sys.stdout.write("Improved Pearson Correlation: %f P-value: %f Slope: %f Cut Y-axis: %f \n"%(pearson,prob,m,c))
          rank_cluster.setdefault((pv,rnk,perc),(pearson,prob,m,c,len(ave_list_reduced)))
 
-       if pearson > max_pearson or (pearson==max_pearson and len(ave_list)>max_forms) or (pearson==max_pearson and len(ave_list)==max_forms and rnk<select_rank):
+       if pearson > max_pearson or (pearson==max_pearson and len(ave_list)>max_forms) or (pearson==max_pearson and len(ave_list)==max_forms and rnk<select_rank) or (pearson==max_pearson and len(ave_list)==max_forms and rnk==select_rank and select_p_threshold>pv):
           select_percentil   = perc
           select_p_threshold = pv
           select_rank        = rnk
@@ -313,7 +313,7 @@ def main():
           max_forms          = len(ave_list)
 
  fo=open(outrank,"w")
- fo.write("#%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\n"%("rank","PMI","min.Pvalue","max.cluster","correlation","models","slope","Y-axis","two-tail-prob"))
+ fo.write("#%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\n"%("rank","PMI","min.Pvalue","max.cluster","correlation","models","two-tail-prob","slope","Y-axis"))
  irank=0
  try:
     for (pv,rnk,perc) in sorted(rank_cluster.iterkeys(),key=lambda x: rank_cluster.get(x)[0],reverse=True):
