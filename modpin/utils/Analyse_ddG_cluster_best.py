@@ -293,7 +293,7 @@ def main():
        (pearson,prob)=st.pearsonr(ddg_real,ddg_pred)
        A = np.vstack([ddg_pred, np.ones(len(ddg_pred))]).T
        m, c = np.linalg.lstsq(A, ddg_real,rcond=-1 )[0]
-       if verbose: sys.stdout.write("Pearson Correlation: %f P-value: %f Slope: %f Cut Y-axis: %f P-value %f Rank %d Percentage of mutations in the interface %d \n"%(pearson,prob,m,c,pv,rnk,perc))
+       if verbose: sys.stdout.write("Pearson Correlation: %f P-value: %f Slope: %f Cut Y-axis: %f P-value %f Rank %d Percentage of mutations in the interface %d Number of models %d\n"%(pearson,prob,m,c,pv,rnk,perc,len(ave_list)))
        rank_cluster.setdefault((pv,rnk,perc),(pearson,prob,m,c,len(ave_list)))
        if float(options.outlier_percentil) > 0:
          (ddg_list_reduced,ave_list_reduced)=reduce_outliers_lstsq(ddg_list,ave_list,m,c,float(options.outlier_percentil))
@@ -305,12 +305,35 @@ def main():
          if verbose: sys.stdout.write("Improved Pearson Correlation: %f P-value: %f Slope: %f Cut Y-axis: %f \n"%(pearson,prob,m,c))
          rank_cluster.setdefault((pv,rnk,perc),(pearson,prob,m,c,len(ave_list_reduced)))
 
-       if pearson > max_pearson or (pearson==max_pearson and len(ave_list)>max_forms) or (pearson==max_pearson and len(ave_list)==max_forms and rnk<select_rank) or (pearson==max_pearson and len(ave_list)==max_forms and rnk==select_rank and select_p_threshold>pv):
+       if pearson > max_pearson:
           select_percentil   = perc
           select_p_threshold = pv
           select_rank        = rnk
           max_pearson        = pearson
           max_forms          = len(ave_list)
+          if verbose: sys.stdout.write("Selected Pearson Correlation: %f P-value %f Rank %d Percentage of mutations in the interface %d Number of models %d\n"%(max_pearson,select_p_threshold,select_rank,select_percentil,max_forms))
+       elif  (pearson==max_pearson and len(ave_list)>max_forms):
+          select_percentil   = perc
+          select_p_threshold = pv
+          select_rank        = rnk
+          max_pearson        = pearson
+          max_forms          = len(ave_list)
+          if verbose: sys.stdout.write("Selected Pearson Correlation: %f P-value %f Rank %d Percentage of mutations in the interface %d Number of models %d\n"%(max_pearson,select_p_threshold,select_rank,select_percentil,max_forms))
+       elif  (pearson==max_pearson and len(ave_list)==max_forms and rnk<select_rank):
+          select_percentil   = perc
+          select_p_threshold = pv
+          select_rank        = rnk
+          max_pearson        = pearson
+          max_forms          = len(ave_list)
+          if verbose: sys.stdout.write("Selected Pearson Correlation: %f P-value %f Rank %d Percentage of mutations in the interface %d Number of models %d\n"%(max_pearson,select_p_threshold,select_rank,select_percentil,max_forms))
+       elif  (pearson==max_pearson and len(ave_list)==max_forms and rnk==select_rank and select_p_threshold>pv):
+          select_percentil   = perc
+          select_p_threshold = pv
+          select_rank        = rnk
+          max_pearson        = pearson
+          max_forms          = len(ave_list)
+          if verbose: sys.stdout.write("Selected Pearson Correlation: %f P-value %f Rank %d Percentage of mutations in the interface %d Number of models %d\n"%(max_pearson,select_p_threshold,select_rank,select_percentil,max_forms))
+
 
  fo=open(outrank,"w")
  fo.write("#%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\n"%("rank","PMI","min.Pvalue","max.cluster","correlation","models","two-tail-prob","slope","Y-axis"))
