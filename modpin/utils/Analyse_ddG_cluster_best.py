@@ -347,11 +347,19 @@ def main():
       if verbose:  sys.stderr.write("Failed to rank fitting curves by Pearson correlation, error:  %s\n"%(e))
  fo.close()
 
+
+
+ fo=open(output,"w")
+ fo.write("Best conditions:\n")
+ fo.write("\tRANK: %d\n"%select_rank)
+ fo.write("\tP-value: %f\n"%select_p_threshold)
+ fo.write("\tInterface Mutation Percentage: %f\n"%select_percentil)
+ 
  ddg_real_dict={}
  ddg_pred_dict={}
  for (file_name,analysis),result in comparison_all.iteritems(): 
     for cluster,overlap_b,overlap_a,form_b,form_a,data,pvalue,ave_b,ave_a,diff,ddg in sorted(result,key=lambda x: int(x[0]),reverse=True):
-          if pvalue < select_p_threshold and int(cluster) < select_rank :
+          if pvalue < select_p_threshold and int(cluster) <= select_rank :
             if (10*int(overlap_b) >= select_percentil or len(form_b.split("_"))==1) and (10*int(overlap_a) >= select_percentil or len(form_a.split("_"))==1):
                 if form_b < form_a:
                     ddg_real_dict.setdefault((form_b,form_a),ddg)
@@ -382,18 +390,14 @@ def main():
          A = np.vstack([ddg_pred, np.ones(len(ddg_pred))]).T
          m, c = np.linalg.lstsq(A, ddg_real,rcond=-1 )[0]
 
-
- fo=open(output,"w")
- fo.write("Best conditions:\n")
- fo.write("\tRANK: %d\n"%select_rank)
- fo.write("\tP-value: %f\n"%select_p_threshold)
- fo.write("\tInterface Mutation Percentage: %f\n"%select_percentil)
  fo.write("Pearson Correlation:\t%f\n"%pearson)
  fo.write("Two-tailed p-value: \t%f\n"%prob)
  fo.write("Slope of fitting:   \t%f\n"%m)
  fo.write("Cut Y-axis:         \t%f\n"%c)
  fo.close()
 
+
+ 
  image, fig = plt.subplots()
 
  fig.plot(ddg_pred, ddg_real, 'o', label='SKEMPI ddG', markersize=2)
