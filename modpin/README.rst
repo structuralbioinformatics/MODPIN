@@ -287,6 +287,6 @@ python utils/Analyse_ddG_cluster.py -g example/SKEMPI/modppi_skempi_short.ddG -l
 # p => the minimum p-value to start, up to 1
 # r => the maximum rank, starting from 1
 
-python utils/Analyse_ddG_cluster_best.py -g example/SKEMPI/modppi_skempi_short.ddG -l "optim_rank" -d example/SKEMPI -e zrank -o example/SKEMPI/Selected -i 1.0 -p 0.005 -r 10 -lp 1.0  -v -k 1.0
+python utils/Analyse_ddG_cluster_best.py -g example/SKEMPI/modppi_skempi_short.ddG -l "best_rank0" -d example/SKEMPI -e zrank -o example/SKEMPI/Selected -i 1.0 -p 0.005 -r 10 -lp 1.0  -v -k 1.0 -n 100
 
 
