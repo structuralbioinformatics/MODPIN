@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 # Add '.' to sys.path
 src_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(src_path)
-script_path = src_path+"/../../scripts"
+script_path = src_path+"/../scripts"
 sys.path.append(script_path)
 
 # Read configuration file
