@@ -336,6 +336,7 @@ def main():
 
 
  fo=open(outrank,"w")
+ fo.write("# Factor of proportionality: %f\n"%factor)
  fo.write("#%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\n"%("rank","PMI","min.Pvalue","max.cluster","correlation","models","two-tail-prob","slope","Y-axis"))
  irank=0
  try:
