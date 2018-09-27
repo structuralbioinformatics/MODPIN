@@ -289,4 +289,24 @@ python utils/Analyse_ddG_cluster.py -g example/SKEMPI/modppi_skempi_short.ddG -l
 
 python utils/Analyse_ddG_cluster_best.py -g example/SKEMPI/modppi_skempi_short.ddG -l "best_rank0" -d example/SKEMPI -e zrank -o example/SKEMPI/Selected -i 1.0 -p 0.005 -r 10 -lp 1.0  -v -k 1.0 -n 100
 
+#Prediction based on best correlation parameters found with utils/Analyse_ddG_cluster_best.py stored in "Compare_ddG_with_average_"+ label + energy (i.e Compare_ddG_with_average_best_rank0_zrank.rank)
+#Using onbly the original data 
+
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e zrank  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_zrank.rank -k 1.0 -v
+
+#or
+
+python src/functions/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v
+
+
+#Using the cross of mutants to calculate additional cases
+
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_cross_best_rank0" -e zrank  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_zrank.rank -k 1.0 -v -x
+
+#or
+
+python src/functions/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_cross_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v -x
+
+
+
 
