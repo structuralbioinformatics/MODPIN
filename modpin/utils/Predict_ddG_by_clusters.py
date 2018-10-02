@@ -412,7 +412,7 @@ def main():
     prediction.setdefault((form_b,form_a),(check_cluster,overlap_b,overlap_a,pvalue,ave_b,ave_a,correlation,sign,slope,y_axis,state_prediction,ddg_prediction,str(ddg),ok,fail,g,l,s))
  tp_and_fp.setdefault("neutral",(okey,wrong,gain,loss,same))
                
- size_data=size_data+float(okey+wrong)
+ size_data_neutral=size_data+float(okey+wrong)
 
           
  fo=open(output,"w")
@@ -435,7 +435,10 @@ def main():
      correct,fails,gain,loss,same = tp_and_fp.get(correlation)
      if correct+fails > 0: success_ratio = correct/float(correct+fails)
      if correct+fails > 0: fail_ratio    = fails/float(correct+fails)
-     coverage = float(correct+fails)/size_data
+     if correlation=="neutral": 
+        coverage = float(correct+fails)/size_data_neutral
+     else:
+        coverage = float(correct+fails)/size_data
      tp_gain,fp_gain,tn_gain,fn_gain  = gain
      tp_loss,fp_loss,tn_loss,fn_loss  = loss
      tp_same,fp_same,tn_same,fn_same  = same
