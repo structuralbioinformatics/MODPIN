@@ -210,6 +210,23 @@ def predictor(ddg_prediction,ddg,epsilon):
 
   return state_prediction,ok,fail, gain, loss, same
 
+def test_equal(a,b):
+
+    aa,ab=a.split("::")
+    ba,bb=b.split("::")
+    protein_A1=aa.split()[0]
+    protein_A2=ab.split()[0]
+    protein_B1=ba.split()[0]
+    protein_B2=bb.split()[0]
+
+    check=False
+
+    if str(protein_A1) == str(protein_B1) and str(protein_A2) == str(protein_B2): check =True
+    if str(protein_A1) == str(protein_B2) and str(protein_A2) == str(protein_B1): check =True
+   
+    return check
+ 
+
 def tpr_fpr(tp,fp,tn,fn):
     tpr= fpr= tnr = 0.0
     if (tp+fp)>0: tpr = float(tp)/float(tp+fp)
@@ -375,6 +392,7 @@ def main():
             sys.stdout.write("...continue with the rest of interactions\n")
             number_of_models = number_of_models + 1
          for check_cluster,overlap_b,overlap_a,form_b,form_a,pvalue,ave_b,ave_a,diff,ddg in sorted(result,key=lambda x: int(x[0]),reverse=True):
+             if test_equal(form_b,form_a): continue
              if verbose and step==1 and number_of_models < 10:
                 sys.stdout.write("\t-- Check features %s %s Cluster %s PMI_A %10s PMI_B %10s P-value %10s Predicted ddG: %10s Known ddG: %10s\n"%(form_a,form_b,str(check_cluster),str(overlap_a),str(overlap_b),str(pvalue),str(diff),str(ddg)))
              if prediction.has_key((form_a,form_b)) or prediction.has_key((form_b,form_a)): continue
@@ -401,6 +419,7 @@ def main():
  for (file_name,analysis),result in comparison_all.iteritems():
   for check_cluster,overlap_b,overlap_a,form_b,form_a,pvalue,ave_b,ave_a,diff,ddg in sorted(result,key=lambda x: int(x[0]),reverse=True):
     if prediction.has_key((form_a,form_b)) or prediction.has_key((form_b,form_a)): continue
+    if test_equal(form_b,form_a): continue
     ddg_prediction = 0
     if ddg is not None:
       state_prediction, ok,fail, g, l, s = predictor(ddg_prediction,ddg,epsilon)
@@ -416,7 +435,7 @@ def main():
 
           
  fo=open(output,"w")
- fo.write("#%15s\t%15s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%20s\t%20s\t%20s\n"%("Protein_B","Protein_A","PMI_B","PMI_A","Pvalue","cluster","correlation","two-tail-prob","slope","Y-axis","dG_B","dG_A","Prediction","pred.ddG","ddG","success","fail","gain","loss","unaffected"))
+ fo.write("#%14s\t%15s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%10s\t%20s\t%20s\t%20s\n"%("Protein_B","Protein_A","PMI_B","PMI_A","Pvalue","cluster","correlation","two-tail-prob","slope","Y-axis","dG_B","dG_A","Prediction","pred.ddG","ddG","success","fail","gain","loss","unaffected"))
  for pair,results in  prediction.iteritems():
      protein_b,protein_a = pair
      check_cluster,pmi_b,pmi_a,pvalue,dg_b,dg_a,correlation,sign,slope,y_axis,state_prediction,ddg_prediction,ddg,ok,f,g,l,s =  results
