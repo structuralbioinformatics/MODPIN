@@ -296,7 +296,7 @@ python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Sele
 
 #or
 
-python src/functions/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v
 
 
 #Using the cross of mutants to calculate additional cases
