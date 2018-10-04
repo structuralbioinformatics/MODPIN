@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 # Add '.' to sys.path
 src_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(src_path)
-script_path = src_path+"/../../scripts"
+script_path = src_path+"/../scripts"
 sys.path.append(script_path)
 
 # Read configuration file
@@ -442,6 +442,10 @@ def main():
      fo.write("%15s\t%15s\t%10.5f\t%10.5f\t%10.1e\t%10d\t%10s\t%10.1e\t%10.5f\t%10.5f\t%10s\t%10s\t%10s\t%10.5f\t%10s\t%10d\t%10d\t%20s\t%20s\t%20s\n"%(protein_b,protein_a,pmi_b,pmi_a,pvalue,check_cluster,str(correlation),sign,slope,y_axis,dg_b,dg_a,state_prediction,ddg_prediction,ddg,ok,f,g,l,s))
  fo.close()
 
+
+ if options.ddg is None: 
+    if verbose: sys.stdout.write("Done!\n")
+    exit(0)
  
  tpr_tnr_fpr_gain={}
  tpr_tnr_fpr_loss={}
@@ -488,6 +492,7 @@ def main():
  plotSuccess(coverage_success,outgraph,title)
 
   
+ if verbose: sys.stdout.write("Done!\n")
 
 # MAIN ###########################################################################################################
 
