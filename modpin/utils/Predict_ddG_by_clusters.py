@@ -252,9 +252,9 @@ def main():
  if not  fileExist(input_rank):
    sys.stderr.write("Missing File with ranking conditions\n")
    exit(0) 
+ ddg_dict={}
  if options.ddg is not None:
    if verbose: sys.stdout.write("Parsing %s\n"%(options.ddg))
-   ddg_dict={}
    if not fileExist(options.ddg):
     sys.stderr.write("File %s not found \n"%options.ddg)
    fa=open(options.ddg,"r")
