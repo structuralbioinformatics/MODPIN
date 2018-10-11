@@ -191,8 +191,22 @@ def main():
 				continue
 		if  os.path.isfile(zrank_path)==True:
 			config.set('Paths', 'zrank_path', zrank_path)
+	
+		foldx_path = raw_input("4) Insert path to executable of FOLDX: ")
+		foldx_path = foldx_path.lstrip()
+		while os.path.isfile(foldx_path) == False:
+			foldx_path  = raw_input ("Insert the correct path to executable of FoldX, or press enter to skip and add it later manually to the config.ini file: ")
+			foldx_path = foldx_path.lstrip()
+			if not foldx_path :
+				break
+			else:
+				continue
+		if  os.path.isfile(os.path.join(foldx_path,"foldx")==True and os.path.isfile(os.path.join(foldx_path,"rotabase.txt")==True:
+			config.set('Paths', 'foldx_path', foldx_path)
+                else:
+                        sys.stdout.write("\t-- Warning!!! Neither 'foldx' nor 'rotabase.txt' were found under FoldX path\n")
 
-		clustal_path = raw_input("4) Insert path to bin folder of clustalw2: ")
+		clustal_path = raw_input("5) Insert path to bin folder of clustalw2: ")
 		clustal_path = clustal_path.lstrip()
 		while which(os.path.join(clustal_path, "clustalw2")) == False or os.path.isdir(clustal_path) == False:
 			clustal_path = raw_input ("Insert the correct path to executable of clustalw2, or press enter to skip and add it later manually to the config.ini file: ")
@@ -204,7 +218,7 @@ def main():
 		if  which(os.path.join(clustal_path, "clustalw2")) == True:
 			config.set('Paths', 'clustal_path', clustal_path)
 
-		rosetta_path = raw_input("5) Insert path to the main folder Rosetta: ")
+		rosetta_path = raw_input("6) Insert path to the main folder Rosetta: ")
 		rosetta_path = rosetta_path.lstrip()
 		while os.path.isdir(os.path.join(rosetta_path, "database"))  == False:
 			rosetta_path = raw_input ("Insert the correct path to Rosetta main folder which contains the database, or press enter to skip and add it later manually to the config.ini file: ")		
@@ -270,7 +284,7 @@ def main():
 
 		
 
-		hbplus_path = raw_input("6) Insert path to executable of hbplus: ")
+		hbplus_path = raw_input("7) Insert path to executable of hbplus: ")
 		hbplus_path = hbplus_path.lstrip()
 		while os.path.isfile(hbplus_path) == False:
 			hbplus_path = raw_input ("Insert the correct path to executable of hbplus, or press enter to skip and add it later manually to the config.ini file: ")
@@ -282,7 +296,7 @@ def main():
 		if   os.path.isfile(hbplus_path)  == True:
 			config.set('Paths', 'hbplus_path', hbplus_path)
 
-		reduce_path = raw_input("7) Insert path to executable of reduce: ")
+		reduce_path = raw_input("8) Insert path to executable of reduce: ")
 		reduce_path = reduce_path.lstrip()
 		while os.path.isfile(reduce_path) == False:
 			reduce_path = raw_input ("Insert the correct path to executable of reduce, or press enter to skip and add it later manually to the config.ini file: ")
@@ -297,7 +311,7 @@ def main():
 
 
 
-		reduce_db_path = raw_input("8) Insert path and name of HET dict. file for reduce: ")
+		reduce_db_path = raw_input("9) Insert path and name of HET dict. file for reduce: ")
 		reduce_db_path = reduce_db_path.lstrip()
 		path, filename = os.path.split(reduce_db_path)
 		while os.path.isfile(reduce_db_path)== False or filename.startswith("reduce")==False  or filename.endswith(".txt") == False:
@@ -310,7 +324,7 @@ def main():
 		if os.path.isfile(reduce_db_path)==True and filename.startswith("reduce")==True and filename.endswith(".txt") == True:
 				config.set('Paths', 'reduce_db_path', reduce_db_path)
 
-                configure_cluster = raw_input ("9) Do you want configure the parallelization? (Y/N): ")
+                configure_cluster = raw_input ("10) Do you want configure the parallelization? (Y/N): ")
                 if configure_cluster.startswith("y") or configure_cluster.startswith("Y"):
                    cluster_name = raw_input ("\t-Cluster name: ")
                    if not cluster_name: cluster_name="None"

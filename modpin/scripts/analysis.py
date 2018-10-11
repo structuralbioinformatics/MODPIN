@@ -45,11 +45,11 @@ def main():
     options    = parse_user_arguments()
     verbose    = options.show
     zrank      = options.zrank
+    foldx      = options.foldx
+    rosetta    = options.rosetta
     input_list = os.path.join(options.ppi_list)
     output_dir = options.outdir
     hbplus     = options.hbplus
-    #zrank_exe  = os.path.join(config.get('Paths','modppi_path'),config.get('Paths','zrank_path'),'zrank')
-    zrank_exe  = config.get('Paths','zrank_path')
     label      = options.label
     boxplot    = options.boxplot
 
@@ -86,11 +86,107 @@ def main():
     
 
     binding={}
+
     #Run zrank on folders if active option zrank
     if zrank:
      if verbose: sys.stdout.write("\t-- Calculate ZRANK...\n")
-     for pair,folders in list_of_models.iteritems():
-      for pose,folder in folders:
+     try:
+       binding_by_zrank= calculate_zrank(list_of_models,dummy_dir,label,verbose)
+     except Exception as e:
+       sys.stderr.write("FAIL %s\n"%(e))
+       exit(0)
+     for key,value in binding_by_zrank.iteritems():
+         binding.setdefault(key,value)
+
+    #Run foldx on folders if active option foldx
+    if foldx:
+     if verbose: sys.stdout.write("\t-- Calculate FOLDX...\n")
+     try:
+       binding_by_foldx= calculate_foldx(list_of_models,dummy_dir,label,verbose)
+     except Exception as e:
+       sys.stderr.write("FAIL %s\n"%(e))
+       exit(0)
+     for key,value in binding_by_foldx.iteritems():
+         binding.setdefault(key,value)
+
+    #Run Rosetta on folders (by default is always done)
+    if not rosetta:
+       if verbose: sys.stdout.write("\t-- Calculate ddG with Rosetta...\n")
+       try:
+         binding_by_rosetta=calculate_rosetta(list_of_models,dummy_dir,label,verbose)
+       except Exception as e:
+         sys.stderr.write("FAIL %s\n"%(e))
+         exit(0)
+       for key,value in binding_by_rosetta.iteritems():
+           binding.setdefault(key,value)
+   
+    #Prepare Plots
+    energy_type=set()
+    pair_list=set()
+    pose_list=set()
+    plot_list=set()
+    for ((a,b),pose,key),outfile  in binding.iteritems():
+        energy_type.add(key)
+        pair_list.add((a,b))
+        pose_list.add(pose)
+    for key in energy_type:
+        output=os.path.join(output_dir,label+"."+key+"_distribution.dat") 
+        name_file=os.path.join(output_dir,label+"."+key+"_distribution")
+        fo=open( output,"w")
+        for pose in pose_list:
+         if pose == 0:
+           output_pose=os.path.join(output_dir,label+"."+key+".all_distribution.dat") 
+           name_file_pose=os.path.join(output_dir,label+"."+key+".all_distribution")
+         else:
+           output_pose=os.path.join(output_dir,label+"."+key+".cluster_"+str(pose)+"_distribution.dat") 
+           name_file_pose=os.path.join(output_dir,label+"."+key+".cluster_"+str(pose)+"_distribution")
+         fp=open( output_pose,"w")
+         for a,b in pair_list:
+           if binding.has_key(((a,b),pose,key)):
+            outfile= binding[((a,b),pose,key)]
+            if pose_interfaces.has_key((pose,(a,b))):
+             fp.write("%s %s\n"%(a+"-"+b+"#"+str(pose)+interface_affected(pose_interfaces[pose,(a,b)]),outfile))
+         fp.close()
+         plot_list.add((key,name_file_pose,1,len(pair_list))) 
+        ncmax=0
+        for a,b in pair_list:
+          nc=0
+          for pose in pose_list:
+            if pose==0:continue
+            if binding.has_key(((a,b),pose,key)):
+             nc=nc+1
+             if nc>ncmax:ncmax=nc
+             outfile= binding[((a,b),pose,key)]
+             if pose_interfaces.has_key((pose,(a,b))):
+              fo.write("%s %s\n"%(a+"-"+b+"#"+str(pose)+interface_affected(pose_interfaces[pose,(a,b)]),outfile))
+        fo.close()
+        plot_list.add((key,name_file,ncmax,ncmax*len(pair_list)))
+
+    #Automatic BOXPLOTS
+    if boxplot:
+       boxplot_path = os.path.join(config.get('Paths','modppi_path'),config.get('Paths','functions_path'))
+       boxplot_exe  = os.path.join(boxplot_path,"boxplot.py")
+       python_path  = config.get('Paths', 'python_path')
+       python_exe   = os.path.join(python_path,"python")
+       for key,name,nc,nh in plot_list:
+         input_list  = name + ".dat"
+         boxplot_name= name
+         output_name = name + "_statistic.out"
+         os.system('%s %s -l %s -o %s -nc %d -nh %d -t "Distribution of %s" >& %s'%(python_exe,boxplot_exe,input_list,boxplot_name,nc,nh,key,output_name))
+         if verbose: sys.stdout.write('\t-- boxplot SCORE %s INPUT %s OUTPUT %s STATISTICS %s\n'%(key,input_list,boxplot_name,output_name))
+
+    #Remove dummy folders
+    if not verbose: shutil.rmtree(dummy_dir)
+
+
+def calculate_zrank(list_of_models,dummy_dir,label,verbose):
+
+  #Initialize
+  zrank_exe  = config.get('Paths','zrank_path')
+  binding={}
+
+  for pair,folders in list_of_models.iteritems():
+    for pose,folder in folders:
        #if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder.split("/")[-1],pair))
        if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder,pair))
        output_zrank=folder+".zr.out"
@@ -157,8 +253,84 @@ def main():
        #When finally there is a result for zrank added
        binding.setdefault((pair,pose,"zrank"),output_zrank_label)
 
-    #Run Rosetta on folders
-    if verbose: sys.stdout.write("\t-- Calculate ddG with Rosetta...\n")
+  return binding
+
+
+def calculate_foldx(list_of_models,dummy_dir,label,verbose):
+
+  #Initialize
+  foldx_path  = config.get('Paths','foldx_path')
+  foldx_exe   = os.path.join(foldx_path,"foldx")
+  rotabase    = os.path.join(foldx_path,"rotabase.txt")
+  binding={}
+
+  for pair,folders in list_of_models.iteritems():
+    for pose,folder in folders:
+       #if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder.split("/")[-1],pair))
+       if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder,pair))
+       output_foldx=folder+".foldx."+label+".out"
+       if not fileExist(output_foldx):
+         output_dummy=os.path.basename(folder)+".foldx."+label+".out"
+         foldx_list=[]
+         fo=open(folder,"r")
+         for line in fo:
+           p=line.strip()
+           dummy_file=os.path.join(dummy_dir,os.path.basename(p))
+           shutil.copyfile(p,dummy_file)
+           foldx_list.append(p)
+         fo.close()
+         cwd = os.getcwd()
+         os.chdir(dummy_dir)
+         energy={}
+         for pdb_check in foldx_list:
+           pdb_name=os.path.basename(pdb_check)
+           pdb_root="".join(pdb_name.split(".")[0:-1])
+           if not fileExist(pdb_name):
+              raise ValueError("Missing file %s"%(pdb_name))
+           # execute foldx optimization
+           pdb_repair=pdb_root+"_Repair.pdb"
+           pdb_repair_home = os.path.join(os.path.dirname(pdb_check),pdb_repair)
+           if fileExist(pdb_repair_home):
+              shutil.copyfile(pdb_repair_home,pdb_repair)
+           else:
+              os.system("%s  --rotabaseLocation %s --repair_Interface ONLY  --command RepairPDB --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_name,pdb_root+"_Repair.log"))
+              shutil.copyfile(pdb_repair,pdb_repair_home)
+           # execute foldx AnalyseComplex
+           if not fileExist(pdb_repair):
+              raise ValueError("Missing file %s"%(pdb_repair))
+           os.system("%s  --rotabaseLocation %s --command AnalyseComplex --analyseComplexChains=A,B --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_repair,pdb_root+"_AC.log"))
+           #parse foldx output
+           pdb_fxout="Interaction_"+pdb_root+"_Repair_AC.fxout"
+           if verbose: sys.stdout.write("\t\t\t-- Open %s ...\n"%(pdb_fxout))
+           if fileExist(pdb_fxout):
+              fo=open(pdb_fxout,"r")
+              for line in fo:
+                  word=line.strip().split()
+                  if len(word)>0:
+                   if word[0].lstrip("./") == pdb_repair:
+                     energy.setdefault(pdb_check,float(word[5]))
+              fo.close()
+           else:
+              raise ValueError("Missing file %s"%(pdb_fxout))
+         if verbose: sys.stdout.write("\t\t\t-- Use FoldX output %s ...\n"%(output_dummy))
+         fo=open(output_dummy,"w")
+         for pdb,ene in energy.iteritems():
+           fo.write("%s\t%s\n"%(pdb,ene))
+         fo.close()
+         shutil.move(output_dummy,output_foldx)
+         os.chdir(cwd)
+       else:
+         if verbose: sys.stdout.write("\t\t\t-- Use FoldX output %s ...\n"%(os.path.basename(output_foldx)))
+       #Add result of foldx
+       binding.setdefault((pair,pose,"foldx"),output_foldx)
+
+  return binding
+
+
+def calculate_rosetta(list_of_models,dummy_dir,label,verbose):
+
+    binding={}
+
     if verbose: sys.stdout.write("\t\t-- Cleaning output files...\n")
     for pair,folders in list_of_models.iteritems():
      for pose,folder in folders:
@@ -209,64 +381,9 @@ def main():
       for feature in energy_type:
           binding.setdefault((pair,pose,feature+"_all"),folder+"."+feature+"_all."+label+".out")
           binding.setdefault((pair,pose,feature+"_mean"),folder+"."+feature+"_mean."+label+".out")
-  
-   
-    energy_type=set()
-    pair_list=set()
-    pose_list=set()
-    plot_list=set()
-    for ((a,b),pose,key),outfile  in binding.iteritems():
-        energy_type.add(key)
-        pair_list.add((a,b))
-        pose_list.add(pose)
-    for key in energy_type:
-        output=os.path.join(output_dir,label+"."+key+"_distribution.dat") 
-        name_file=os.path.join(output_dir,label+"."+key+"_distribution")
-        fo=open( output,"w")
-        for pose in pose_list:
-         if pose == 0:
-           output_pose=os.path.join(output_dir,label+"."+key+".all_distribution.dat") 
-           name_file_pose=os.path.join(output_dir,label+"."+key+".all_distribution")
-         else:
-           output_pose=os.path.join(output_dir,label+"."+key+".cluster_"+str(pose)+"_distribution.dat") 
-           name_file_pose=os.path.join(output_dir,label+"."+key+".cluster_"+str(pose)+"_distribution")
-         fp=open( output_pose,"w")
-         for a,b in pair_list:
-           if binding.has_key(((a,b),pose,key)):
-            outfile= binding[((a,b),pose,key)]
-            if pose_interfaces.has_key((pose,(a,b))):
-             fp.write("%s %s\n"%(a+"-"+b+"#"+str(pose)+interface_affected(pose_interfaces[pose,(a,b)]),outfile))
-         fp.close()
-         plot_list.add((key,name_file_pose,1,len(pair_list))) 
-        ncmax=0
-        for a,b in pair_list:
-          nc=0
-          for pose in pose_list:
-            if pose==0:continue
-            if binding.has_key(((a,b),pose,key)):
-             nc=nc+1
-             if nc>ncmax:ncmax=nc
-             outfile= binding[((a,b),pose,key)]
-             if pose_interfaces.has_key((pose,(a,b))):
-              fo.write("%s %s\n"%(a+"-"+b+"#"+str(pose)+interface_affected(pose_interfaces[pose,(a,b)]),outfile))
-        fo.close()
-        plot_list.add((key,name_file,ncmax,ncmax*len(pair_list)))
 
-    #Automatic BOXPLOTS
-    if boxplot:
-       boxplot_path = os.path.join(config.get('Paths','modppi_path'),config.get('Paths','functions_path'))
-       boxplot_exe  = os.path.join(boxplot_path,"boxplot.py")
-       python_path  = config.get('Paths', 'python_path')
-       python_exe   = os.path.join(python_path,"python")
-       for key,name,nc,nh in plot_list:
-         input_list  = name + ".dat"
-         boxplot_name= name
-         output_name = name + "_statistic.out"
-         os.system('%s %s -l %s -o %s -nc %d -nh %d -t "Distribution of %s" >& %s'%(python_exe,boxplot_exe,input_list,boxplot_name,nc,nh,key,output_name))
-         if verbose: sys.stdout.write('\t-- boxplot SCORE %s INPUT %s OUTPUT %s STATISTICS %s\n'%(key,input_list,boxplot_name,output_name))
+    return binding
 
-    #Remove dummy folders
-    if not verbose: shutil.rmtree(dummy_dir)
               
 def compare_templates(sa,sb):
 
@@ -833,7 +950,7 @@ def compare_seq_wt(name,seq,name_wt,seq_wt,dummy_dir):
       len_wt=len(seq_wt)
       len_msa=len(wt_msa)
     except  Exception as e:
-      sys.stderr.write("ERROR: %s\n"%e)
+      sys.stderr.write("ERROR and SKIP: %s\n"%e)
       return (set(),set())
     sys.stdout.write("\t\t -- Sequence comparison of Wild-Type %s versus the form %s\n"%(name_wt,name))
     difference=""
@@ -870,7 +987,7 @@ def compare_seq_wt(name,seq,name_wt,seq_wt,dummy_dir):
       len_seq=len(seq)
       len_msa=len(seq_msa)
     except  Exception as e:
-      sys.stderr.write("ERROR: %s\n"%e)
+      sys.stderr.write("ERROR and SKIP: %s\n"%e)
       return (set(),set())
 
     while (residue_number<len(seq)) and (k<len(seq_msa)):
@@ -952,6 +1069,10 @@ def parse_user_arguments(*args, **kwds):
                         help = 'Specifies the location of the dummy folder (default is /tmp/modppi_dummy)')
     parser.add_argument('-zrank', '--zrank', dest = 'zrank', action = 'store_true',
                         help = 'Flag to calculate energies with ZRANK (default is False)')
+    parser.add_argument('-foldx', '--foldx', dest = 'foldx', action = 'store_true',
+                        help = 'Flag to calculate energies with FoldX (default is False)')
+    parser.add_argument('-NoRosetta', '--NoRosetta', dest = 'rosetta', action = 'store_true',
+                        help = 'Flag to skip energies with ROSETTA (default is False)')
     parser.add_argument('-hydro','--hydrogens', dest = 'hbplus', action = 'store_true',
                         help = 'Flag to include hydrogens (default is False)')
     parser.add_argument('-boxplot','--boxplot', dest = 'boxplot', action = 'store_true',
