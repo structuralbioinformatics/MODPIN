@@ -189,8 +189,8 @@ python scripts/modelist.py -i example/unrewiring_mutants.dat  -l UNREWIRED -seq 
 #         The file with hydrogens will be the same as the PDB input with extension ".h" instead of ".pdb"
 #
 
-python scripts/modelist.py -i example/rewiring_mutants.dat  -l REWIRED -seq example/uniprot_Marc_Vidal.fasta -o example/rewired -n 3 -d dummy -3did -v --parallel -opt -a --continue --hydrogens --renumerate 
-python scripts/modelist.py -i example/unrewiring_mutants.dat  -l UNREWIRED -seq example/uniprot_Marc_Vidal.fasta -o example/unrewired -n 3 -d dummy -3did -v --parallel -opt -a --continue  --hydrogens --renumerate
+python scripts/modelist.py -i example/rewiring_mutants.dat  -l REWIRED -seq example/uniprot_Marc_Vidal.fasta -o example/rewired -n 3 -d dummy -3did -v --parallel -opt -a --continue --hydrogens --renumerate --zrank
+python scripts/modelist.py -i example/unrewiring_mutants.dat  -l UNREWIRED -seq example/uniprot_Marc_Vidal.fasta -o example/unrewired -n 3 -d dummy -3did -v --parallel -opt -a --continue  --hydrogens --renumerate --zrank
 
 # Step 3: To further analyze and compare the whole set of mutations we run the script "select_cluster". 
 #         This produces a selection of clustered interfaces for each complex with mutant forms compared with the wild type 
@@ -236,7 +236,7 @@ python parser_skempi2ModPIN.py -i skempi_v2.csv -p ./PDBs -o modppi_skempi_short
 # Then we can run modelist with modppi_skempi_short.ppi and modppi_skempi_short.fa
 
 python scripts/modelist.py -i example/modppi_skempi_short.ppi  -l SKEMPI -seq example/modppi_skempi_short.fa -o example/SKEMPI -n 3 -d dummy -3did -v --parallel -opt  --renumerate 
-python scripts/modelist.py -i example/modppi_skempi_short.ppi  -l SKEMPI -seq example/modppi_skempi_short.fa -o example/SKEMPI -n 3 -d dummy -3did -v --parallel -opt -a --continue --hydrogens --renumerate 
+python scripts/modelist.py -i example/modppi_skempi_short.ppi  -l SKEMPI -seq example/modppi_skempi_short.fa -o example/SKEMPI -n 3 -d dummy -3did -v --parallel -opt -a --continue --hydrogens --renumerate  --zrank --foldx
  
 # For analysing the energies we can run the bash script:
 
@@ -248,12 +248,12 @@ foreach type ( "example/SKEMPI/")
 set models=`ls ${type}/models`
 echo $models
 
-foreach score ( "ddG_all" "ddG_mean" "dGx_all" "dGx_mean" "zrank" "dSASA_all" "dSASAp_all" "dSASAh_all" "dSASA_mean" "dSASAp_mean" "dSASAh_mean")
+foreach score ( "ddG_all" "ddG_mean" "dGx_all" "dGx_mean" "zrank" "foldx" "dSASA_all" "dSASAp_all" "dSASAh_all" "dSASA_mean" "dSASAp_mean" "dSASAh_mean")
 
 python  src/functions/select_cluster.py ${type} ${score}
 \rm  $home/${type}/${score}.rank
 
-foreach ene ( "ddG_all" "ddG_mean" "dGx_all" "dGx_mean" "zrank")
+foreach ene ( "ddG_all" "ddG_mean" "dGx_all" "dGx_mean" "zrank" "foldx")
 python  src/functions/Exponential_Averaging_FEP.py ${type}  ${score} ${ene}
 end
 
@@ -279,7 +279,7 @@ python utils/Analyse_ddG_FEP.py -a example/modppi_skempi_short.ddG -b example/SK
 # the p-value of significance when comparing the distributions of two forms and the ranking of the cluster, whhich depends
 # on the number of models or conformations in the cluster
 
-python utils/Analyse_ddG_cluster.py -g example/SKEMPI/modppi_skempi_short.ddG -l "i1p0005r10" -d example/SKEMPI -e zrank -o example/SKEMPI/Selected -i 1.0 -p 0.005 -r 10 -lp 1.0  -v -k 0.01
+python utils/Analyse_ddG_cluster.py -g example/SKEMPI/modppi_skempi_short.ddG -l "i1p0005r10" -d example/SKEMPI -e zrank -o example/SKEMPI/Selected -i 1.0 -p 0.005 -r 10 -lp 1.0  -v -k 1.0
 
 #But we can also use an automatic search of these conditions with the script:
 # where the conditions shown in the input are just the thresholds
@@ -298,6 +298,11 @@ python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Sele
 
 python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v
 
+#or
+
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 0.01 -v
+
+
 
 #Using the cross of mutants to calculate additional cases
 
@@ -306,6 +311,11 @@ python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Sele
 #or
 
 python src/functions/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_cross_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v -x
+
+#or
+
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 0.01 -v
+
 
 
 
