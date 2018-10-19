@@ -76,34 +76,30 @@ def main():
 
  options   = parse_user_arguments()
 
- if options.fep is None  :
+ if options.ddg is None or options.fep is None  :
     sys.stderr.write("Missing arguments, Check help\n")
     exit(0)
 
  if options.verbose: sys.stdout.write("Parsing %s\n"%(options.ddg))
  ddg_dict={}
- if options.ddg is not None:
-   if not fileExist(options.ddg):
+ if not fileExist(options.ddg):
     sys.stderr.write("File %s not found\n"%options.ddg)
-    exit(0)
-   else:
-    fa=open(options.ddg,"r")
-    for line in fa:
-       if line.startswith("#"): continue
-       form,ddg=line.split()
-       if options.clean_null is not None:
-         if ddg < -float(options.clean_null) or ddg > float(options.clean_null):
-           ddg_dict.setdefault(form,float(ddg))
-       else:
-         ddg_dict.setdefault(form,float(ddg))
-    fa.close()
+ fa=open(options.ddg,"r")
+ for line in fa:
+    if line.startswith("#"): continue
+    form,ddg=line.split()
+    if options.clean_null is not None:
+      if ddg < -float(options.clean_null) or ddg > float(options.clean_null):
+        ddg_dict.setdefault(form,float(ddg))
+    else:
+      ddg_dict.setdefault(form,float(ddg))
+ fa.close()
 
 
  if options.verbose: sys.stdout.write("Parsing %s\n"%(options.fep))
  fep_dict={}
  if not fileExist(options.fep):
     sys.stderr.write("File %s not found\n"%options.fep)
-    exit(0)
  fb=open(options.fep,"r")
  for line in fb:
     data=line.split()
@@ -134,21 +130,12 @@ def main():
 
  ddg_list=[]
  fep_list=[]
- n=0
  for form,ene in ddg_dict.iteritems():
    if fep_dict.has_key(form):
       ddg_list.append(ene)
       fep_list.append(fep_dict.get(form))
-      n= n+1
+      
 
- if n==0:
-    sys.stderr.write("Missing file of affinities. Output only on FEP\n")
-    output= options.out+".dat"
-    fo=open(output,"w")
-    for form, ene in sorted(fep_dict.iteritems(), key=lambda (k,v): (v,k)):
-       fo.write("%s\t%10.5f\n"%(form,ene))
-    fo.close()
-    exit(0)
 
  
  ddg_real=np.array(ddg_list)

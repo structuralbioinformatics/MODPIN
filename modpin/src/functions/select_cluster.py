@@ -43,10 +43,12 @@ from SBI.structure.contacts import Complex
 from SBI.sequence import Sequence
 from SBI.structure import PDB
 
+def fileExist (file):
+ return os.path.exists(file) and os.path.isfile(file)
 
 
 if len(sys.argv)==1:
- sys.stdout.write("Excution is 'select_cluster <directory>' where directory is the output folder of modelist.py\n")
+ sys.stdout.write("Excution is 'select_cluster <directory> <score>' where directory is the output folder of modelist.py and score is the score grouping of Rosetta to test (ddG_all by default)\n")
  exit(0)
 
 input_dir=sys.argv[1]
