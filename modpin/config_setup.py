@@ -34,6 +34,8 @@ def main():
 	config.set('Parameters','extension_threshold','15')
 	config.set('Parameters','hydrogens','full')
 	config.set('Parameters','relax','yes')
+	config.set('Parameters','ssp_score','ES3DC; ZES3DC; PAIR; ZPAIR; COMB; ZCOMB')
+	config.set('Parameters','ssp_type','CB')
 
 
 

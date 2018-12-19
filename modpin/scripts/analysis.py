@@ -38,6 +38,8 @@ from Bio import SeqIO
 from Bio import ExPASy
 from Bio import AlignIO
 from Bio.Align.Applications import *
+import BioLib
+
 
 def main():
     
@@ -46,12 +48,17 @@ def main():
     verbose    = options.show
     zrank      = options.zrank
     foldx      = options.foldx
+    ssp        = options.ssp
     rosetta    = options.rosetta
     input_list = os.path.join(options.ppi_list)
     output_dir = options.outdir
     hbplus     = options.hbplus
     label      = options.label
     boxplot    = options.boxplot
+
+    #Check that at least one method to calculate the energy is set
+    if not zrank and not foldx and not ssp and not rosetta:
+       ssp=True
 
     if options.ppi_list is None:
       sys.stderr.write("ERROR: Missing argument input list '-i'\n")
@@ -109,8 +116,19 @@ def main():
      for key,value in binding_by_foldx.iteritems():
          binding.setdefault(key,value)
 
+    #Run SSP on folders if active option ssp
+    if ssp:
+     if verbose: sys.stdout.write("\t-- Calculate by Split Potentials...\n")
+     try:
+       binding_by_ssp= calculate_split_potentials(list_of_models,dummy_dir,label,verbose)
+     except Exception as e:
+       sys.stderr.write("FAIL %s\n"%(e))
+       exit(0)
+     for key,value in binding_by_ssp.iteritems():
+         binding.setdefault(key,value)
+
     #Run Rosetta on folders (by default is always done)
-    if not rosetta:
+    if rosetta:
        if verbose: sys.stdout.write("\t-- Calculate ddG with Rosetta...\n")
        try:
          binding_by_rosetta=calculate_rosetta(list_of_models,dummy_dir,label,verbose)
@@ -326,6 +344,107 @@ def calculate_foldx(list_of_models,dummy_dir,label,verbose):
 
   return binding
 
+class SPPPI(object):
+    '''
+    Analyze a protein folds using the split potentials and prints an XML file
+    '''
+    def __init__(self, receptor, ligand, pot_type):
+        '''
+        Contructor
+        '''
+        self.receptor    = receptor
+        self.ligand      = ligand
+        self.pot_type    = pot_type
+
+ 
+    def get_energies(self):
+        '''
+        Compute the split potentials for a ppi
+        '''
+        receptor=self.receptor
+        ligand  =self.ligand
+
+        receptor.set_dssp()
+        receptor.normalize_residues()
+        ligand.set_dssp()
+        ligand.normalize_residues()
+
+        ppi = BioLib.Interaction(receptor, ligand)
+
+        # Compute split potentials
+        if self.pot_type == 'CB':
+            cutoff = 12
+        else: 
+            cutoff = 5
+
+        split_potentials = BioLib.SplitPotentialsPPI(c_type=self.pot_type, cutoff=cutoff) # definition of SplitPotentialsPPI class (BioLib.Docking)
+        global_energies = split_potentials.calculate_global_energies(ppi, Zscores=True) # calculation of global energies using the method of the SplitPotentialsPPI class
+
+        return global_energies
+
+
+
+def calculate_split_potentials(list_of_models,dummy_dir,label,verbose):
+
+  #Initialize
+  ssp_list = config.get('Parameters','ssp_score')
+  ssp_type = config.get('Parameters','ssp_type')
+
+  ssp_score_list=ssp_list.split(";")
+
+  binding={}
+
+  for pair,folders in list_of_models.iteritems():
+   for pose,folder in folders:
+    for ssp in ssp_score_list:
+       ssp_score=ssp.replace(" ","")
+       #if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder.split("/")[-1],pair))
+       if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder,pair))
+       output_ssp=folder+"."+ssp_score+"."+label+".out"
+       if not fileExist(output_ssp):
+         output_dummy=os.path.basename(folder)+"."+ssp_score+"."+label+".out"
+         ssp_list=[]
+         fo=open(folder,"r")
+         for line in fo:
+           p=line.strip()
+           dummy_file=os.path.join(dummy_dir,os.path.basename(p))
+           shutil.copyfile(p,dummy_file)
+           ssp_list.append(p)
+         fo.close()
+         cwd = os.getcwd()
+         os.chdir(dummy_dir)
+         energy={}
+         for pdb_check in ssp_list:
+           pdb_name=os.path.basename(pdb_check)
+           pdb_root="".join(pdb_name.split(".")[0:-1])
+           if not fileExist(pdb_name):
+              raise ValueError("Missing file %s"%(pdb_name))
+           # execute ssp 
+           pdb_ppi=BioLib.PDB.read_pdb(pdb_name)
+           receptor     = pdb_ppi.pop()
+           ligand       = pdb_ppi.pop()
+           ssp_ppi      = SPPPI(receptor,ligand,ssp_type)
+           ssp_energies = ssp_ppi.get_energies()
+           zscore=0
+           if ssp_score.lower().startswith("z"):   zscore=1
+           if ssp_score.lower().endswith("local"): ssp_ene="D-LOCAL"
+           if ssp_score.lower().endswith("pair"):  ssp_ene="D-PAIR"
+           if ssp_score.lower().endswith("comb"):  ssp_ene="D-COMB"
+           if ssp_score.lower().endswith("s3dc"):  ssp_ene="D-S3DC"
+           energy.setdefault(pdb_check,float(ssp_energies[zscore][ssp_ene]))
+         if verbose: sys.stdout.write("\t\t\t-- Use Split Potentials output %s ...\n"%(output_dummy))
+         fo=open(output_dummy,"w")
+         for pdb,ene in energy.iteritems():
+           fo.write("%s\t%s\n"%(pdb,ene))
+         fo.close()
+         shutil.move(output_dummy,output_ssp)
+         os.chdir(cwd)
+       else:
+         if verbose: sys.stdout.write("\t\t\t-- Use Split Potentials output %s ...\n"%(os.path.basename(output_ssp)))
+       #Add result of ssp
+       binding.setdefault((pair,pose,ssp_score),output_ssp)
+
+  return binding
 
 def calculate_rosetta(list_of_models,dummy_dir,label,verbose):
 
@@ -541,7 +660,7 @@ def parser_list_of_models(input_list,options):
          else:
           output_file=path_file+"/"+input_file+".h"
          if not fileExist(output_file):
-          add_hydrogens(config,path_file,input_file,output_file)
+          add_hydrogens(config,path_file,input_file,output_file,dummy_dir)
          fo.write("%s\n"%output_file)
          if renumerate:
           if verbose: sys.stdout.write("\t\t\t-- Renumerate residues as original sequence %s\n"%input_file)
@@ -1071,8 +1190,10 @@ def parse_user_arguments(*args, **kwds):
                         help = 'Flag to calculate energies with ZRANK (default is False)')
     parser.add_argument('-foldx', '--foldx', dest = 'foldx', action = 'store_true',
                         help = 'Flag to calculate energies with FoldX (default is False)')
-    parser.add_argument('-NoRosetta', '--NoRosetta', dest = 'rosetta', action = 'store_true',
-                        help = 'Flag to skip energies with ROSETTA (default is False)')
+    parser.add_argument('-rosetta', '--rosetta', dest = 'rosetta', action = 'store_true',
+                        help = 'Flag to calculate energies with ROSETTA (default is False)')
+    parser.add_argument('-ssp', '--split-potentials', dest = 'ssp', action = 'store_true',
+                        help = 'Flag to calculate energies with Split-Statistic Potentials (default is False unless no other method is used)')
     parser.add_argument('-hydro','--hydrogens', dest = 'hbplus', action = 'store_true',
                         help = 'Flag to include hydrogens (default is False)')
     parser.add_argument('-boxplot','--boxplot', dest = 'boxplot', action = 'store_true',
