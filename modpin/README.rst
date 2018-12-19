@@ -202,10 +202,10 @@ python scripts/modelist.py -i example/unrewiring_mutants.dat  -l UNREWIRED -seq 
 #         first selected (i.e. dGx_mean, from dG_cross of Rosetta)
 #
 
-python src/functions/select_cluster.py example/rewired
-python src/functions/select_cluster.py example/unrewired
-python src/functions/Exponential_Averaging_FEP.py  example/rewired  dGx_mean ddG_mean
-python src/functions/Exponential_Averaging_FEP.py  example/unrewired  dGx_mean ddG_mean
+python utils/select_cluster.py example/rewired
+python utils/select_cluster.py example/unrewired
+python utils/Exponential_Averaging_FEP.py  example/rewired  dGx_mean ddG_mean
+python utils/Exponential_Averaging_FEP.py  example/unrewired  dGx_mean ddG_mean
 
 
 
