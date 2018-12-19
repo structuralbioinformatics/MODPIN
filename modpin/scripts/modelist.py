@@ -69,6 +69,7 @@ def main():
     zrank      = options.zrank
     foldx      = options.foldx
     rosetta    = options.rosetta
+    ssp        = options.ssp
 
     if label is None:
        label=query_list.split("/")[-1]
@@ -86,7 +87,8 @@ def main():
     if renumerate:flags = flags + " --renumerate "
     if zrank:     energy = energy + " --zrank"
     if foldx:     energy = energy + " --foldx"
-    if rosetta:   energy = energy + " --NoRosetta"   
+    if ssp:       energy = energy + " --split-potentials"
+    if rosetta:   energy = energy + " --rosetta"   
     translate={}
     if fileExist(fasta):
      for protein in FASTA_iterator(fasta):
@@ -227,8 +229,10 @@ def parse_user_arguments(*args, **kwds):
                         help = 'Flag to calculate energies with ZRANK (default is False)')
     parser.add_argument('-foldx', '--foldx', dest = 'foldx', action = 'store_true',
                         help = 'Flag to calculate energies with FoldX (default is False)')
-    parser.add_argument('-NoRosetta', '--NoRosetta', dest = 'rosetta', action = 'store_true',
-                        help = 'Flag to skip energies with ROSETTA (default is False)') 
+    parser.add_argument('-rosetta', '--rosetta', dest = 'rosetta', action = 'store_true',
+                        help = 'Flag to calculate energies with ROSETTA (default is False)')
+    parser.add_argument('-ssp', '--split-potentials', dest = 'ssp', action = 'store_true',
+                        help = 'Flag to calculate energies with Split-Statistic Potentials (default is False unless no other method is used)')
     options = parser.parse_args()
     return options
 
