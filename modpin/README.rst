@@ -300,7 +300,7 @@ python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Sele
 
 #or
 
-python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 0.01 -v
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 1.0 -v
 
 
 
@@ -314,7 +314,7 @@ python src/functions/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKE
 
 #or
 
-python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 0.01 -v
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 1.0 -v
 
 
 
