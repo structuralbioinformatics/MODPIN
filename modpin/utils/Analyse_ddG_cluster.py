@@ -278,7 +278,9 @@ def main():
 
  output=outdir+"/Compare_ddG_with_average_"+label_out+"_"+score+".dat"
  graph=outdir+"/Compare_ddG_with_average_"+label_out+"_"+score+"."+options.format
+ datagraph=outdir+"/Compare_ddG_with_average_"+label+"_"+score+"."+options.format+".dat"
 
+ 
  
  if float(options.outlier_percentil) > 0:
    (ddg_list_reduced,ave_list_reduced)=reduce_outliers_lstsq(ddg_list,ave_list,m,c,float(options.outlier_percentil))
@@ -295,6 +297,14 @@ def main():
  fo.write("Slope of fitting:   \t%f\n"%m)
  fo.write("Cut Y-axis:         \t%f\n"%c)
  fo.close()
+
+ fo=open(datagraph,"w")
+ fo.write("%15s\t%15s\n"%("ddG predict","ddG real"))
+ for i in xrange(0,len(ddg_pred)):
+  fo.write("%15.5f\t%15.5f\n"%(ddg_pred[i],ddg_real[i]))
+ fo.close()
+
+
 
  image, fig = plt.subplots()
 
