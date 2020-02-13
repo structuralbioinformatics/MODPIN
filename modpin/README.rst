@@ -310,13 +310,29 @@ python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Sele
 
 #or
 
-python src/functions/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_cross_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v -x
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_cross_best_rank0" -e ddG_mean  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_ddG_mean.rank -k 0.01 -v -x
 
 #or
 
-python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_original_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 1.0 -v
+python utils/Predict_ddG_by_clusters.py -d example/SKEMPI -o example/SKEMPI/Selected -g example/SKEMPI/modppi_skempi_short.ddG -l "_cross_best_rank0" -e foldx  -i example/SKEMPI/Selected/Compare_ddG_with_average_best_rank0_foldx.rank -k 1.0 -v -x
 
 
+###############################################################################
+#  Prediction of binding affinity changes in other datasets                   #
+###############################################################################
+
+#
+# We may use the results of rankied correlations with SKEMPI to predict changes of bindingaffinity in other datasets
+# for example in EBI data on mutant forms and splicing variants.
+# We assume we have run the same approach with a set of interactions with data from IntAct (i.e. files in example/MI0119.fa example/MI0119.ppi and models in  example/EBI/MI0119)
+# and a file with artificial "ddG" of binding affinity, such as ddG=1.0 for all interactions to be tested (i.e.  example/MI0119.ddG)
+#
+# Results of ranking correlations with SKEMPI are stored in folder data
+#
+# then, using for example results of zrank in SKEMPI, the prediction will be:
+#
+
+python utils/Predict_ddG_by_clusters.py -d example/EBI/MI0119 -o example/EBI/Predict -g  example/MI0119.ddG -g  example/MI0119.ddG -l "MI0119" -e zrank -i data/Compare_ddG_with_average_best_rank0_zrank.rank
 
 
 
