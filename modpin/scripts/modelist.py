@@ -93,12 +93,11 @@ def main():
     if fileExist(fasta):
      for protein in FASTA_iterator(fasta):
         name = protein.get_identifier()
+        entry=accession=name
         if re.search('[a-z][|A-Z0-9][|A-Z0-9]', name):
+         if len(name.split("|"))>2:
            accession=name.split("|")[1] 
            entry    =name.split("|")[2] 
-        else:
-           accession=name
-           entry=name
         translate.setdefault(entry.split()[0],accession.split()[0])
     else:
         sys.stderr.write('EXIT: Missing FASTA sequence list file %s\n' %(fasta))

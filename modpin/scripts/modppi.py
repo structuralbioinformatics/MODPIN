@@ -407,6 +407,7 @@ def parse_inputs(options):
             name = protein.get_identifier()
             # If the header has a UniProt pattern, 'name' will be its accession number
             if re.search('[a-z][|A-Z0-9][|A-Z0-9]', name):
+               if len(name.split('|'))>1:
                 name = name.split('|')[1]
             seq = protein.get_sequence()
             if len(seq) > 0:
@@ -849,7 +850,7 @@ def modelling(queriesA_original,queriesB_original,queriesA, queriesB, hit_items_
               if verbose: sys.stdout.write("\t\t\t-- Adding hydrogens and relaxing the model %s\n"%model_name)
               output_model=model_name
               try:
-               add_hydrogens(config,os.path.abspath("./"),input_model, output_model)
+               add_hydrogens(config,os.path.abspath("./"),input_model, output_model,dummy_dir)
               except ValueError as e:
                sys.stderr.write("WARNING %s\n"%e)
                os.rename(input_model, output_model)
