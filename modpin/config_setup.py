@@ -203,7 +203,7 @@ def main():
 				break
 			else:
 				continue
-		if  os.path.isfile(os.path.join(foldx_path,"foldx")==True and os.path.isfile(os.path.join(foldx_path,"rotabase.txt")==True:
+		if  os.path.isfile(os.path.join(foldx_path,"foldx"))==True and os.path.isfile(os.path.join(foldx_path,"rotabase.txt"))==True:
 			config.set('Paths', 'foldx_path', foldx_path)
                 else:
                         sys.stdout.write("\t-- Warning!!! Neither 'foldx' nor 'rotabase.txt' were found under FoldX path\n")
