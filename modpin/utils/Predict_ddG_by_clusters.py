@@ -151,10 +151,16 @@ def parse_user_arguments(*args, **kwds):
     return options
 
 def predictor(ddg_prediction,ddg,epsilon):
+  gain = (0, 0, 0, 0)
+  same = (0, 0, 0, 0)
+  ok=0
+  fail=0
+  state_prediction=None
+  if   ddg_prediction >  epsilon and ddg >  epsilon:      
   if   ddg_prediction >  epsilon :    state_prediction="loss"
   if   ddg_prediction < -epsilon :    state_prediction="gain"
   if  abs(ddg_prediction) < epsilon : state_prediction="neutral"
-  if ddg is not None:
+  if ddg is not Nonei and state_prediction is not None:
      #      tp,fp,tn,fn
      loss = (0, 0, 0, 0)
      gain = (0, 0, 0, 0)
@@ -399,6 +405,12 @@ def main():
              if (10*int(overlap_b) >= pmi or  len(form_b.split("_"))==1) and (10*int(overlap_a) >= pmi or len(form_a.split("_"))==1) and check_cluster<=cluster and pvalue < pv:
                ddg_prediction = factor*diff*slope + y_axis
                if verbose: sys.stdout.write("\t-- Found Interaction %s %s with condition PMI %10.5f P-value %10.1e Cluster %d with correlation %10s and significance %10.1e Gain= %s Loss= %s Neutral= %s\n"%(form_a,form_b,float(pmi),float(pv),int(cluster),str(correlation),float(sign),str(gain),str(loss),str(same)))
+               state_prediction=None
+               if   ddg_prediction >  epsilon and ddg >  epsilon:      
+               if   ddg_prediction >  epsilon :    state_prediction="loss"
+               if   ddg_prediction < -epsilon :    state_prediction="gain"
+               if  abs(ddg_prediction) < epsilon : state_prediction="neutral"
+               if state_prediction is None: continue
                if ddg is not None:
                  state_prediction, ok,fail, g, l, s = predictor(ddg_prediction,ddg,epsilon)
                  wrong= wrong + fail
@@ -421,6 +433,12 @@ def main():
     if prediction.has_key((form_a,form_b)) or prediction.has_key((form_b,form_a)): continue
     if test_equal(form_b,form_a): continue
     ddg_prediction = 0
+    state_prediction=None
+    if   ddg_prediction >  epsilon and ddg >  epsilon:      
+    if   ddg_prediction >  epsilon :    state_prediction="loss"
+    if   ddg_prediction < -epsilon :    state_prediction="gain"
+    if  abs(ddg_prediction) < epsilon : state_prediction="neutral"
+    if state_prediction is None: continue
     if ddg is not None:
       state_prediction, ok,fail, g, l, s = predictor(ddg_prediction,ddg,epsilon)
       wrong= wrong + fail
