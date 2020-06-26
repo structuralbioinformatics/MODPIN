@@ -3,7 +3,7 @@
 ```
 git clone https://github.com/structuralbioinformatics/MODPIN.git
 
-cd Modpin
+cd MODPIN
 
 IF YOU PREFER TO INSTALL IT INSIDE THE FOLDER DOWNLOADED FROME GITHUB:
 pip install -e . --user
