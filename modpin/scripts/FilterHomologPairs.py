@@ -66,6 +66,7 @@ def printverbose(f,flag,message):
 
 def filter_homologs(input_file,potential="min",radius=5.0,overlap=20.0,show=False):
 
+ pdbdir=""
  if fileExist(input_file):
   inp=open(input_file,"r")
   pdblist=[]
@@ -83,6 +84,7 @@ def filter_homologs(input_file,potential="min",radius=5.0,overlap=20.0,show=Fals
  else:
   raise IOError("Input File not found")
 
+ if pdbdir=="": raise IOError("Input File is empty")
  printverbose(sys.stdout,show,("PDB directory: %s\n"%(pdbdir)))
 
  interface={}

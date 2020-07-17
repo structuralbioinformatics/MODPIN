@@ -287,36 +287,64 @@ def calculate_foldx(list_of_models,dummy_dir,label,verbose):
        #if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder.split("/")[-1],pair))
        if verbose: sys.stdout.write("\t\t-- Use list %s for %s...\n"%(folder,pair))
        output_foldx=folder+".foldx."+label+".out"
+       if verbose: sys.stdout.write("\t\t-- Output %s...\n"%(output_foldx))
        if not fileExist(output_foldx):
          output_dummy=os.path.basename(folder)+".foldx."+label+".out"
          foldx_list=[]
          fo=open(folder,"r")
+         if verbose: sys.stdout.write("\t\t-- Open %s ...\n"%(folder))
          for line in fo:
+           #print line.strip()
            p=line.strip()
-           dummy_file=os.path.join(dummy_dir,os.path.basename(p))
-           shutil.copyfile(p,dummy_file)
-           foldx_list.append(p)
+           if verbose: sys.stdout.write("\t\t\t-- Use %s ...\n"%os.path.basename(p))
+           try:
+             dummy_file=os.path.join(dummy_dir,os.path.basename(p))
+             #print "COPY",dummy_file
+             shutil.copyfile(p,dummy_file)
+             #print "ADD",p
+             foldx_list.append(p)
+           except:
+             sys.stdout.write("\t\t\t\t-- Skip %s copy cpuld not be added\n"%p)
+             continue 
+         if verbose: sys.stdout.write("\t\t-- Close %s ...\n"%(folder))
          fo.close()
+         if verbose:
+            print "\t ===  DATA  ==="
+            print foldx_list
+            print "\t =============="
          cwd = os.getcwd()
          os.chdir(dummy_dir)
          energy={}
          for pdb_check in foldx_list:
+           #print "CHECK",pdb_check
            pdb_name=os.path.basename(pdb_check)
            pdb_root="".join(pdb_name.split(".")[0:-1])
            if not fileExist(pdb_name):
-              raise ValueError("Missing file %s"%(pdb_name))
+              if verbose: sys.stdout.write("\t\t\t-- File no exist %s ...\n"%pdb_name)
+              #raise ValueError("Missing file %s"%(pdb_name))
+              continue
            # execute foldx optimization
            pdb_repair=pdb_root+"_Repair.pdb"
            pdb_repair_home = os.path.join(os.path.dirname(pdb_check),pdb_repair)
+           if verbose: sys.stdout.write("\t\t-- Optimize file %s ...\n"%pdb_name)
            if fileExist(pdb_repair_home):
               shutil.copyfile(pdb_repair_home,pdb_repair)
            else:
-              os.system("%s  --rotabaseLocation %s --repair_Interface ONLY  --command RepairPDB --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_name,pdb_root+"_Repair.log"))
-              shutil.copyfile(pdb_repair,pdb_repair_home)
+              if verbose: sys.stdout.write("%s  --rotabaseLocation %s --repair_Interface ONLY  --command RepairPDB --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_name,pdb_root+"_Repair.log\n"))
+              try:
+                os.system("%s  --rotabaseLocation %s --repair_Interface ONLY  --command RepairPDB --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_name,pdb_root+"_Repair.log"))
+                shutil.copyfile(pdb_repair,pdb_repair_home)
+              except:
+                print "FAILED FOLDX REPAIR %s"%pdb_repair
            # execute foldx AnalyseComplex
            if not fileExist(pdb_repair):
-              raise ValueError("Missing file %s"%(pdb_repair))
-           os.system("%s  --rotabaseLocation %s --command AnalyseComplex --analyseComplexChains=A,B --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_repair,pdb_root+"_AC.log"))
+              if verbose: sys.stdout.write("\t\t\t-- File optimized has failed  %s ...\n"%pdb_repair)
+              #raise ValueError("Missing file %s"%(pdb_repair))
+           if verbose: sys.stdout.write("%s  --rotabaseLocation %s --command AnalyseComplex --analyseComplexChains=A,B --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_repair,pdb_root+"_AC.log\n"))
+           try:
+             os.system("%s  --rotabaseLocation %s --command AnalyseComplex --analyseComplexChains=A,B --pdb=%s >& %s"%(foldx_exe,rotabase,pdb_repair,pdb_root+"_AC.log"))
+           except:
+             print "FAILED FOLDX %s"%pdb_root
            #parse foldx output
            pdb_fxout="Interaction_"+pdb_root+"_Repair_AC.fxout"
            if verbose: sys.stdout.write("\t\t\t-- Open %s ...\n"%(pdb_fxout))
@@ -329,7 +357,9 @@ def calculate_foldx(list_of_models,dummy_dir,label,verbose):
                      energy.setdefault(pdb_check,float(word[5]))
               fo.close()
            else:
-              raise ValueError("Missing file %s"%(pdb_fxout))
+              #raise ValueError("Missing file %s"%(pdb_fxout))
+              sys.stdout.write("\t\t\t-- Missing file %s"%(pdb_fxout))
+              continue
          if verbose: sys.stdout.write("\t\t\t-- Use FoldX output %s ...\n"%(output_dummy))
          fo=open(output_dummy,"w")
          for pdb,ene in energy.iteritems():
@@ -742,7 +772,11 @@ def parser_list_of_models(input_list,options):
     if not new_models.has_key(wt):
      maxsize=0
      for pair,folder in new_models.iteritems():
-       pdbdir,interface,cluster = filter_homologs(folder,potential=potential,radius=radius,overlap=overlap,show=False)
+       try:
+         pdbdir,interface,cluster = filter_homologs(folder,potential=potential,radius=radius,overlap=overlap,show=False)
+       except IOError as e:
+         print e
+         continue
        if max([len(s) for c,s in sorted(cluster.items(),key=lambda x: len(x[1]),reverse=True)]) >maxsize: wt=pair
     if wt==(None,None):
       return group_models 
@@ -753,7 +787,10 @@ def parser_list_of_models(input_list,options):
     #Rank the clusters of Wild Type (or select pair) by size and create the lists with grouped structures
     #Keep in the dictionary a list with the name of files (one for each pose) listing the models
     folder_wt = new_models[wt]
-    pdbdir_wt,interface,cluster_wt = filter_homologs(folder_wt,potential=potential,radius=radius,overlap=overlap,show=False)
+    try:
+     pdbdir_wt,interface,cluster_wt = filter_homologs(folder_wt,potential=potential,radius=radius,overlap=overlap,show=False)
+    except IOError as e:
+     print e
     if options.show: sys.stdout.write("\t\t\t Directory %s\n"%pdbdir_wt)
 
     #Write a list of non redundant interfaces for wt
@@ -793,7 +830,11 @@ def parser_list_of_models(input_list,options):
        if pair==wt: continue
 
        if options.show: sys.stdout.write("\t\t -- Clustering similar interfaces for PPI %s - %s ...\n"%(pair[0],pair[1]))
-       pdbdir,interface,cluster = filter_homologs(folder,potential=potential,radius=radius,overlap=overlap,show=False)
+       try:
+         pdbdir,interface,cluster = filter_homologs(folder,potential=potential,radius=radius,overlap=overlap,show=False)
+       except IOError as e:
+         print e
+         continue
        if options.show: sys.stdout.write("\t\t\t Directory %s\n"%pdbdir)
 
        #Select the poses of wt that correspond to each cluster of similar interfaces

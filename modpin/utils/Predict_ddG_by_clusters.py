@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 # Add '.' to sys.path
 src_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(src_path)
-script_path = src_path+"/../scripts"
+script_path = src_path+"/../../scripts"
 sys.path.append(script_path)
 
 # Read configuration file
@@ -131,6 +131,8 @@ def parse_user_arguments(*args, **kwds):
         epilog      = '@Oliva\'s lab 2018')
     parser.add_argument('-d', '--folder', dest = 'folder', action = 'store',
                         help = 'Input directory with MODPPI results')
+    parser.add_argument('-s', '--skip', dest = 'skip', action = 'store',
+                        help = 'file with PPIs that has to be skipped')
     parser.add_argument('-g','--ddG',dest='ddg',action = 'store',default=None,
                         help = 'SKEMPI parsed file of affinities to check TPR and FPR (if empty no analysis is done)')
     parser.add_argument('-e', '--Energy_tested', dest = 'score', action = 'store',default="ddG_mean",
@@ -151,16 +153,15 @@ def parse_user_arguments(*args, **kwds):
     return options
 
 def predictor(ddg_prediction,ddg,epsilon):
-  gain = (0, 0, 0, 0)
-  same = (0, 0, 0, 0)
-  ok=0
-  fail=0
-  state_prediction=None
-  if   ddg_prediction >  epsilon and ddg >  epsilon:      
   if   ddg_prediction >  epsilon :    state_prediction="loss"
   if   ddg_prediction < -epsilon :    state_prediction="gain"
   if  abs(ddg_prediction) < epsilon : state_prediction="neutral"
-  if ddg is not Nonei and state_prediction is not None:
+  ok   = 0
+  fail = 0
+  loss = (0, 0, 0, 0)
+  gain = (0, 0, 0, 0)
+  same = (0, 0, 0, 0)
+  if ddg is not None:
      #      tp,fp,tn,fn
      loss = (0, 0, 0, 0)
      gain = (0, 0, 0, 0)
@@ -213,7 +214,8 @@ def predictor(ddg_prediction,ddg,epsilon):
             loss = (0, 0, 0, 1)
           else:
             gain = (0, 0, 0, 1)
-
+  print state_prediction
+  print ddg_prediction,ddg
   return state_prediction,ok,fail, gain, loss, same
 
 def test_equal(a,b):
@@ -245,6 +247,7 @@ def main():
  options=parse_user_arguments()
 
  files       = os.listdir(options.folder)
+ skip_file   = os.listdir(options.skip)
  score       = options.score
  outdir      = options.outdir
  input_dir   = options.folder
@@ -258,9 +261,9 @@ def main():
  if not  fileExist(input_rank):
    sys.stderr.write("Missing File with ranking conditions\n")
    exit(0) 
- ddg_dict={}
  if options.ddg is not None:
    if verbose: sys.stdout.write("Parsing %s\n"%(options.ddg))
+   ddg_dict={}
    if not fileExist(options.ddg):
     sys.stderr.write("File %s not found \n"%options.ddg)
    fa=open(options.ddg,"r")
@@ -270,10 +273,23 @@ def main():
     ddg_dict.setdefault(form,float(ddg))
    fa.close()
 
+ ppi_skip=set()
+ fs=open(skip_file,"r")
+ for line in fs:
+   a,b=line.strip().split()
+   ppi_skip.add((a,b))
+   ppi_skip.add((b,a))
+ fs.close()
 
  ppi_sets=set()
  for input_file in files:
    if input_file.endswith(".ppi"): 
+      data=input_file.split("_")
+      test_set=set()
+      for data_x in data:
+       for data_y in data:
+           test_set.add((data_x,data_y))
+      if len(test_set.intersection(ppi_skip))>0:continue      
       ppi_sets.add(input_file)
 
  conditions={}
@@ -405,13 +421,14 @@ def main():
              if (10*int(overlap_b) >= pmi or  len(form_b.split("_"))==1) and (10*int(overlap_a) >= pmi or len(form_a.split("_"))==1) and check_cluster<=cluster and pvalue < pv:
                ddg_prediction = factor*diff*slope + y_axis
                if verbose: sys.stdout.write("\t-- Found Interaction %s %s with condition PMI %10.5f P-value %10.1e Cluster %d with correlation %10s and significance %10.1e Gain= %s Loss= %s Neutral= %s\n"%(form_a,form_b,float(pmi),float(pv),int(cluster),str(correlation),float(sign),str(gain),str(loss),str(same)))
+               if verbose: sys.stdout.write("\t\t--Diff %f\n"%diff)
+               if verbose: sys.stdout.write("\t\t--ddg %f = %f * %f * %f + %f\n"%(ddg_prediction,factor,diff,slope,y_axis))
                state_prediction=None
-               if   ddg_prediction >  epsilon and ddg >  epsilon:      
                if   ddg_prediction >  epsilon :    state_prediction="loss"
                if   ddg_prediction < -epsilon :    state_prediction="gain"
                if  abs(ddg_prediction) < epsilon : state_prediction="neutral"
                if state_prediction is None: continue
-               if ddg is not None:
+               if ddg is not None and state_prediction is not None:
                  state_prediction, ok,fail, g, l, s = predictor(ddg_prediction,ddg,epsilon)
                  wrong= wrong + fail
                  okey = okey  + ok
@@ -433,12 +450,6 @@ def main():
     if prediction.has_key((form_a,form_b)) or prediction.has_key((form_b,form_a)): continue
     if test_equal(form_b,form_a): continue
     ddg_prediction = 0
-    state_prediction=None
-    if   ddg_prediction >  epsilon and ddg >  epsilon:      
-    if   ddg_prediction >  epsilon :    state_prediction="loss"
-    if   ddg_prediction < -epsilon :    state_prediction="gain"
-    if  abs(ddg_prediction) < epsilon : state_prediction="neutral"
-    if state_prediction is None: continue
     if ddg is not None:
       state_prediction, ok,fail, g, l, s = predictor(ddg_prediction,ddg,epsilon)
       wrong= wrong + fail
@@ -460,10 +471,6 @@ def main():
      fo.write("%15s\t%15s\t%10.5f\t%10.5f\t%10.1e\t%10d\t%10s\t%10.1e\t%10.5f\t%10.5f\t%10s\t%10s\t%10s\t%10.5f\t%10s\t%10d\t%10d\t%20s\t%20s\t%20s\n"%(protein_b,protein_a,pmi_b,pmi_a,pvalue,check_cluster,str(correlation),sign,slope,y_axis,dg_b,dg_a,state_prediction,ddg_prediction,ddg,ok,f,g,l,s))
  fo.close()
 
-
- if options.ddg is None: 
-    if verbose: sys.stdout.write("Done!\n")
-    exit(0)
  
  tpr_tnr_fpr_gain={}
  tpr_tnr_fpr_loss={}
@@ -477,9 +484,11 @@ def main():
      if correct+fails > 0: success_ratio = correct/float(correct+fails)
      if correct+fails > 0: fail_ratio    = fails/float(correct+fails)
      if correlation=="neutral": 
-        coverage = float(correct+fails)/size_data_neutral
+        if size_data_neutral<=0:continue
+        coverage = float(correct+fails)/(size_data_neutral)
      else:
-        coverage = float(correct+fails)/size_data
+        if size_data<=0:continue
+        coverage = float(correct+fails)/(size_data)
      tp_gain,fp_gain,tn_gain,fn_gain  = gain
      tp_loss,fp_loss,tn_loss,fn_loss  = loss
      tp_same,fp_same,tn_same,fn_same  = same
@@ -510,7 +519,6 @@ def main():
  plotSuccess(coverage_success,outgraph,title)
 
   
- if verbose: sys.stdout.write("Done!\n")
 
 # MAIN ###########################################################################################################
 

@@ -62,6 +62,7 @@ def main():
     did        = options.did
     fasta      = options.sequence_file
     analysis   = options.analysis
+    skip_modppi= options.skip_modppi
     label      = options.label
     cont       = options.cont
     hydrogens  = options.hbplus
@@ -142,8 +143,10 @@ def main():
     scripts_path= os.path.join(src_path,'scripts')
     python_path = config.get('Paths', 'python_path')
 
-    for wt,forms in pair.iteritems():
+    if not skip_modppi:
+     for wt,forms in pair.iteritems():
       ppi=os.path.join(outdir,label+"_"+wt[0]+"_"+wt[1]+".ppi")
+      if verbose: sys.stdout.write("%s %s %s -seq %s -ppi %s -o %s -d %s \n" % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'modppi.py'), flags, os.path.abspath(fasta), os.path.abspath(ppi), os.path.abspath(modeldir),dummy_dir))
       if parallel:
        if  config.get("Cluster", "cluster_queue") == "None": cluster_queue=None
        else: cluster_queue=config.get("Cluster", "cluster_queue")
@@ -151,7 +154,7 @@ def main():
       else:
        os.system("%s %s %s -seq %s -ppi %s -o %s -d %s" % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'modppi.py'), flags, os.path.abspath(fasta), os.path.abspath(ppi), os.path.abspath(modeldir),dummy_dir))
  
-    if parallel and analysis and not cont:
+     if parallel and analysis and not cont:
       sys.stderr.write("Wait until all submissions have finished, then run again with flag '--continue'\n")
       exit(0)  
       
@@ -178,6 +181,7 @@ def main():
         else:
           study_list.write('%s\t%s\tDONE\t%s\n'%(q,p,pair_model[(q,p)]))
       study_list.close()
+      if verbose: sys.stdout.write("%s %s  -l %s -ppi %s --hydrogens --renumerate  -boxplot -v -d %s -o %s -seq %s %s \n" % ( os.path.join(python_path, "python"),  os.path.join(scripts_path,'analysis.py'),   label+"_"+wt[0]+"_"+wt[1], os.path.abspath(os.path.join(outdir,label+"_"+wt[0]+"_"+wt[1]+".list")), dummy_dir,os.path.abspath(outdir),os.path.abspath(fasta),energy)) 
       if parallel:
        if  config.get("Cluster", "cluster_queue") == "None": cluster_queue=None
        else: cluster_queue=config.get("Cluster", "cluster_queue")
@@ -214,6 +218,8 @@ def parse_user_arguments(*args, **kwds):
                         help = 'Flag to include domain-domain interactions from 3DiD (default is False)')
     parser.add_argument('-a','--analysis', dest = 'analysis', action = 'store_true',
                         help = 'Flag to include the analysis of ddG in the runs (default is False)')
+    parser.add_argument('-skp','--skip_modppi', dest = 'skip_modppi', action = 'store_true',
+                        help = 'Flag to skip the modeling and move to the analyses (default is False)')
     parser.add_argument('-c','--continue', dest = 'cont', action = 'store_true',
                         help = 'Flag to continue with analysis after all models are done in a cluster (default is False)')
     parser.add_argument('-v', '--verbose', dest = 'show', action = 'store_true',
